@@ -1,0 +1,13 @@
+[workspace]
+authors = ["ILikeNickelback <christopher.larran@gmail.com>"]
+channels = ["conda-forge"]
+name = "OpenJTS"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.14.*"
+numpy = ">=2.4.6,<3"
+pytest = ">=9.0.3,<10"
