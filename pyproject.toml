@@ -1,0 +1,10 @@
+
+[tool.pixi.workspace]
+name = "OpenJTS"
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tool.pixi.pypi-dependencies]
+OpenJTS = { path = ".", editable = true }
+
+[tool.pixi.tasks]
