@@ -1,0 +1,33 @@
+{
+    "General": {
+        "app_name": "JTS",
+        "default_folder": "experiments",
+        "fontsize": 15
+    },
+    "Debug": {
+        "enabled": false,
+        "log_level": "TRACE"
+    },
+    "ADC": {
+        "board_num": 0,
+        "channel_count": 8,
+        "sampling_rate": 200000,
+        "adc_bit_depth": 65535
+    },
+    "LED": {
+        "actinic_light_max": 100,
+        "actinic_light_offset": 250,
+        "detection_light_max": 100,
+        "detection_light_offset": 25
+    },
+    "ESP32": {
+        "baud_rate": 115200,
+        "timeout": 1
+    },
+    "Sampling": {
+        "samples_per_trigger": 8,
+        "nbr_of_triggers_per_sample": 2,
+        "normal_pulses_per_period": 10,
+        "override_pulses": 4,
+        "number_of_points_before_flash": 3
+    }

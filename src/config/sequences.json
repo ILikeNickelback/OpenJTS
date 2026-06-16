@@ -1,0 +1,55 @@
+{
+    "Sequence_Fluo": [
+        {
+            "name": "ECS",
+            "str_sequence": "4(100msD)A[100]50msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)5(50msD)5(100msD)"
+        },
+        {
+            "name": "Phi PSII",
+            "str_sequence":  "10(500msD)\n\nA[0]\n4(25msA[0]300\u00b5sD50usA[0])\n2(50msA[0]300\u00b5sD50usA[0])\n3(100msA[0]300\u00b5sD50usA[0])\n60(500msA[0]300\u00b5sD50usA[0])\n\nA[100]150msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD\n4(25msD)\n4(100msD)\n10(500msD)"
+        }
+    ],
+    "Sequence_Spectro": [
+        {
+            "name": "Spectro default",
+            "str_sequence": "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)"
+        }
+    ],
+    "Frequency_Fluo": [
+        {
+            "name": "Low frequency",
+            "frequency_config": {
+                "frequency": 10.0,
+                "amplitude": 50.0,
+                "offset": 50.0,
+                "nbr_of_periods": 10,
+                "pre_detection": 1,
+                "post_detection": 1
+            }
+        },
+        {
+            "name": "High frequency",
+            "frequency_config": {
+                "frequency": 100.0,
+                "amplitude": 50.0,
+                "offset": 50.0,
+                "nbr_of_periods": 20,
+                "pre_detection": 2,
+                "post_detection": 2
+            }
+        }
+    ],
+    "Frequency_Spectro": [
+        {
+            "name": "Spectro frequency default",
+            "frequency_config": {
+                "frequency": 10.0,
+                "amplitude": 50.0,
+                "offset": 50.0,
+                "nbr_of_periods": 10,
+                "pre_detection": 1,
+                "post_detection": 1
+            }
+        }
+    ]
+}
