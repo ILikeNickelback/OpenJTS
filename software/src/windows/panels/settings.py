@@ -14,8 +14,8 @@ _DEFAULTS = {
 
 class Experiment_settings_window(WindowBase):
     def __init__(self, label="Data Processing", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+                 uuid=None, visible=True, state=None, bus=None):
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus

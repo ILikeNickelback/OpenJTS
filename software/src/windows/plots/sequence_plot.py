@@ -5,8 +5,8 @@ from core.window_base import WindowBase
 
 class Sequence_plot_window(WindowBase):
     def __init__(self, label="Sequence Plot", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+                 uuid=None, visible=True, state=None, bus=None):
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus

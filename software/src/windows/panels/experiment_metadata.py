@@ -6,9 +6,9 @@ from core.window_base import WindowBase
 
 class Experiment_metadata_window(WindowBase):
     def __init__(self, label="Overview window", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True,
+                 uuid=None, visible=True,
                  state=None, bus=None, experiment_name=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.pos = pos
         self.width = width

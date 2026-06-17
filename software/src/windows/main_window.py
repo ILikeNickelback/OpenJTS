@@ -2,9 +2,8 @@ import tkinter as tk
 from tkinter import filedialog, simpledialog
 
 import dearpygui.dearpygui as dpg
-from core.module_registry import export_workspace, MODULES_REGISTRY, register_module
 from core.tabbed_window_manager import TabbedWindowManager
-from core.workspace_manager import WorkspaceManager
+import core.workspace_manager as workspace_manager
 from pathlib import Path
 
 
@@ -59,7 +58,6 @@ class Main_win:
         self._app_state   = None
         self._bus         = None
 
-        self._workspace_manager = WorkspaceManager()
         self._workspace_dir: Path | None = None   # set after first Save As
 
         with dpg.window(tag=self.winID):
@@ -116,7 +114,6 @@ class Main_win:
                     label="Control Panel",
                     parent="main_body",
                 )
-                register_module(self.control_tabs)
 
         # ── Theme ────────────────────────────────────────────────────────
         with dpg.theme() as mainwin_theme:
@@ -155,7 +152,7 @@ class Main_win:
             return
         try:
             tabs = self._get_tabs_fn() if self._get_tabs_fn else {}
-            self._workspace_manager.save_to(
+            workspace_manager.save_to(
                 workspace_dir=self._workspace_dir,
                 experiment_tabs=tabs,
                 state=self._app_state,
@@ -176,7 +173,7 @@ class Main_win:
         workspace_dir = Path(folder) / name
         try:
             tabs = self._get_tabs_fn() if self._get_tabs_fn else {}
-            self._workspace_manager.save_to(
+            workspace_manager.save_to(
                 workspace_dir=workspace_dir,
                 experiment_tabs=tabs,
                 state=self._app_state,
@@ -206,7 +203,7 @@ class Main_win:
             return
 
         try:
-            workspace_data = self._workspace_manager.load(path)
+            workspace_data = workspace_manager.load(path)
         except Exception as e:
             print(f"Workspace load error: {e}")
             return
@@ -222,9 +219,3 @@ class Main_win:
                 self.control_tabs,
             )
 
-    # ------------------------------------------------------------------
-    # Legacy layout export (kept for Tools menu if needed elsewhere)
-    # ------------------------------------------------------------------
-    def save_workspace(self):
-        base = Path(__file__).parent.parent
-        export_workspace(MODULES_REGISTRY, base / "layouts/manual_layout.json")

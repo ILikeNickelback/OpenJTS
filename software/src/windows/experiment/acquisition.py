@@ -13,10 +13,10 @@ class Acquisition_win(WindowBase):
 
     def __init__(self,
                  label="Acquisition Control", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True,
+                 uuid=None, visible=True,
                  state=None, bus=None):
 
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus
@@ -126,9 +126,11 @@ class Acquisition_win(WindowBase):
         self.is_ready = adc_ok
 
     def _ensure_worker_running(self):
+        if self.state is None:
+            return
         if self.worker_thread is None or not self.worker_thread.is_alive():
             esp32 = self.state.get_esp32_instance()
-            acq_type = self.state.get_acquisition_type()
+            acq_type = self.state.acquisition_type
             if acq_type == "Frequency":
                 self.worker_thread = FrequencyAcquisitionWorker(esp32=esp32)
             else:

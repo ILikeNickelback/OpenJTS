@@ -1,19 +1,29 @@
+"""DearPyGui tab-bar manager with dynamic tab creation and close detection."""
 import dearpygui.dearpygui as dpg
 from typing import Dict, List, Optional, Callable
 from loguru import logger
 
 
 class TabbedWindowManager:
-    """
-    Manages a full-filling tab bar inside any DPG container.
+    """Manages a full-screen tab bar inside any DPG container.
 
-    Supports:
-    - Static tabs (e.g. Home)        — not closeable
-    - Dynamic tabs (e.g. Experiment) — closeable via an [x] button
-    - A '+' tab_button that opens a modal prompt for the new tab name
+    Supports static tabs (non-closeable), dynamic tabs (closeable), and a
+    trailing ``+`` button that opens a modal dialog prompting the user to name
+    and configure a new experiment tab.
+
+    Attributes:
+        on_add_tab: Optional callback invoked when the user confirms a new tab.
+            Signature: ``fn(name: str, acq_type: str, exp_type: str) -> None``.
     """
 
     def __init__(self, label: str = "Tabbed Window Manager", parent=None):
+        """Create the tab bar UI and the new-experiment modal.
+
+        Args:
+            label: Display label for the manager (informational only).
+            parent: DPG item tag/ID to attach the child window to. If ``None``
+                the child window is added to the current DPG container.
+        """
         self.label = label
 
         self._child_id = dpg.generate_uuid()
@@ -38,6 +48,7 @@ class TabbedWindowManager:
     # ------------------------------------------------------------------
 
     def _build_ui(self, parent=None):
+        """Build the child window containing the tab bar and the ``+`` button."""
         kwargs = dict(
             tag=self._child_id,
             autosize_x=True,
@@ -57,10 +68,7 @@ class TabbedWindowManager:
                 )
 
     def _build_modal(self):
-        """
-        A modal popup that asks the user to name the new experiment.
-        Built once; shown/hidden on demand.
-        """
+        """Build the new-experiment modal dialog (created once, shown on demand)."""
         with dpg.window(
             tag=self._modal_id,
             label="New Experiment",
@@ -101,6 +109,7 @@ class TabbedWindowManager:
     # ------------------------------------------------------------------
 
     def _open_name_modal(self):
+        """Centre and display the new-experiment modal, then focus the name input."""
         # Centre the modal on the viewport
         vw = dpg.get_viewport_client_width()
         vh = dpg.get_viewport_client_height()
@@ -110,6 +119,7 @@ class TabbedWindowManager:
         dpg.focus_item(self._input_id)
 
     def _confirm(self, *_):
+        """Read modal inputs and invoke ``on_add_tab``, or warn if invalid."""
         name = dpg.get_value(self._input_id).strip()
         # "Sequence" or "Frequency"
         acq_type = dpg.get_value(self._acq_type_id)
@@ -131,6 +141,7 @@ class TabbedWindowManager:
                 "on_add_tab callback not set on TabbedWindowManager")
 
     def _cancel(self, *_):
+        """Dismiss the modal without creating a tab."""
         dpg.hide_item(self._modal_id)
 
     # ------------------------------------------------------------------
@@ -144,6 +155,20 @@ class TabbedWindowManager:
         select: bool = False,
         closeable: bool = False,
     ) -> bool:
+        """Create a new tab and populate it by calling *builder*.
+
+        If a tab with the same label already exists it is removed first.
+
+        Args:
+            tab_label: Text displayed on the tab header.
+            builder: Zero-argument callable that adds DPG widgets into the tab.
+            select: If ``True``, switch focus to the new tab immediately.
+            closeable: If ``True``, monitor the tab for closure and call
+                :meth:`remove_tab` automatically when it is hidden.
+
+        Returns:
+            ``True`` on success.
+        """
         if tab_label in self.tabs:
             logger.warning(f"Tab '{tab_label}' already exists – replacing.")
             self.remove_tab(tab_label)
@@ -177,6 +202,14 @@ class TabbedWindowManager:
         return True
 
     def remove_tab(self, tab_label: str) -> bool:
+        """Delete a tab and its DPG item.
+
+        Args:
+            tab_label: Label of the tab to remove.
+
+        Returns:
+            ``True`` if the tab was found and removed, ``False`` otherwise.
+        """
         if tab_label not in self.tabs:
             logger.warning(f"Tab '{tab_label}' not found.")
             return False
@@ -192,12 +225,18 @@ class TabbedWindowManager:
         return True
 
     def select_tab(self, tab_label: str):
+        """Switch focus to the tab identified by *tab_label*.
+
+        Args:
+            tab_label: Label of the tab to activate.
+        """
         if tab_label in self.tabs:
             dpg.set_value(self._tab_bar_id, self.tabs[tab_label])
         else:
             logger.warning(f"Tab '{tab_label}' not found.")
 
     def get_current_tab(self) -> Optional[str]:
+        """Return the label of the currently active tab, or ``None`` if unknown."""
         current_id = dpg.get_value(self._tab_bar_id)
         for label, tid in self.tabs.items():
             if tid == current_id:
@@ -206,6 +245,7 @@ class TabbedWindowManager:
 
     @property
     def tab_labels(self) -> List[str]:
+        """Ordered list of all current tab labels."""
         return list(self.tab_order)
 
     # ------------------------------------------------------------------
@@ -213,6 +253,15 @@ class TabbedWindowManager:
     # ------------------------------------------------------------------
 
     def _watch_for_close(self, tab_label: str, tab_id: int):
+        """Poll every 6 frames and call :meth:`remove_tab` when the tab is hidden.
+
+        DearPyGui does not emit a close callback for tabs, so this uses a
+        recurring frame callback to detect when the tab item becomes invisible.
+
+        Args:
+            tab_label: Label of the tab being monitored.
+            tab_id: DPG item ID of the tab.
+        """
         def _check():
             if not dpg.does_item_exist(tab_id):
                 return

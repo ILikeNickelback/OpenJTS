@@ -12,9 +12,9 @@ class Home_win(WindowBase):
     - Experiment list: one row per experiment, populated from app_state
     """
 
-    def __init__(self, label="Home", uuid=None, outputs=None, visible=True,
+    def __init__(self, label="Home", uuid=None, visible=True,
                  state=None, bus=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self._persistent_fields = ["label"]
         self.accepted_input_types = []

@@ -32,8 +32,8 @@ def _save_file(data: dict) -> None:
 
 class SequenceLibraryWindow(WindowBase):
     def __init__(self, label="Load Experiment", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+                 uuid=None, visible=True, state=None, bus=None):
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus
@@ -53,7 +53,7 @@ class SequenceLibraryWindow(WindowBase):
     # Mode helpers
     # ------------------------------------------------------------------
     def _section_key(self) -> str:
-        acq = (self.state.get_acquisition_type() if self.state else None) or "Sequence"
+        acq = (self.state.acquisition_type if self.state else None) or "Sequence"
         exp = config["General"].get("experiment_type", "Fluo")
         return f"{acq}_{exp}"
 

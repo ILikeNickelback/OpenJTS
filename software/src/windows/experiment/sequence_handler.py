@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from core.window_base import WindowBase
-from core import fonts
+from config import fonts
 from sequence_builders.control import sequence_control
 from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
@@ -9,10 +9,10 @@ from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 class Sequence_handler_window(WindowBase):
     def __init__(self, label="Sequence Handler",
                  pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True,
+                 uuid=None, visible=True,
                  state=None, bus=None):
 
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
         self.state = state
         self.bus = bus
         self.sequence_control = sequence_control()
