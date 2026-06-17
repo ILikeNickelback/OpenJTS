@@ -3,6 +3,17 @@ import numpy as np
 from core.window_base import WindowBase
  
 class Lineplot_win(WindowBase):
+    """
+    Live and final results line plot panel.
+
+    Handles three data flows: live streaming (one scalar per frame),
+    intermediate per-run series during averaging, and final averaged
+    results. Nearest-point annotation is shown on hover when the checkbox
+    is enabled. Series are managed externally via the ``plot_cmd`` bus
+    event (add, remove, rename). Final results are accumulated in
+    _saved_results for workspace persistence.
+    """
+
     LIVE_UUID = 999  # Constant to identify live data series
     def __init__(self, label="Lineplot", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None,

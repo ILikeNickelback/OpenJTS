@@ -5,6 +5,14 @@ from config import fonts
 
 
 class Frequency_handler_window(WindowBase):
+    """
+    Status panel for loaded frequency configs.
+
+    Displays the number of loaded configs and estimated total acquisition
+    time (accounting for averaging and ignore runs). Updates when
+    ``sequence_list_ready`` is published on the bus.
+    """
+
     def __init__(self, label="Frequency Handler",
                  pos=None, width=None, height=None,
                  uuid=None, visible=True,

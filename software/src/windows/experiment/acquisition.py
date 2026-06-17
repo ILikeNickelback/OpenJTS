@@ -10,6 +10,15 @@ from workers.frequency_worker import FrequencyAcquisitionWorker
 
 
 class Acquisition_win(WindowBase):
+    """
+    Acquisition control panel for multi-sequence or frequency runs.
+
+    Manages a SequenceAcquisitionWorker or FrequencyAcquisitionWorker in a
+    background thread, polls results, applies baseline subtraction, ignore
+    runs, and per-sequence averaging, then publishes final data on the bus.
+    DPG calls that originate from the polling thread are deferred through
+    _main_thread_queue and drained each frame on the main thread.
+    """
 
     def __init__(self,
                  label="Acquisition Control", pos=None, width=None, height=None,
@@ -120,9 +129,9 @@ class Acquisition_win(WindowBase):
     # ----------------------------------------------------------
     def _check_hardware(self):
         adc = self.state.get_adc_instance()
-        esp32 = self.state.get_esp32_instance()
+        # esp32 = self.state.get_esp32_instance()
         adc_ok = adc is not None and (adc.is_connected() if hasattr(adc, "is_connected") else True)
-        esp32_ok = esp32 is not None and (esp32.is_connected() if hasattr(esp32, "is_connected") else True)
+        # esp32_ok = esp32 is not None and (esp32.is_connected() if hasattr(esp32, "is_connected") else True)
         self.is_ready = adc_ok
 
     def _ensure_worker_running(self):

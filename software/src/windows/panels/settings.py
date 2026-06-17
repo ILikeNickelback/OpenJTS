@@ -13,6 +13,16 @@ _DEFAULTS = {
 
 
 class Experiment_settings_window(WindowBase):
+    """
+    Per-sequence parameter editor for data processing and timing.
+
+    Parameters: baseline subtraction points, number of averages, time
+    between averages, sequences to ignore, and time before the next
+    sequence. Clicking "Parameters" on a sequence row publishes
+    ``open_sequence_settings``, which switches the panel context to that
+    sequence. Settings are stored per-sequence in app_state.
+    """
+
     def __init__(self, label="Data Processing", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)

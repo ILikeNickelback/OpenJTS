@@ -4,6 +4,16 @@ from core.window_base import WindowBase
 
 
 class SaturatingPulseWindow(WindowBase):
+    """
+    Floating modal editor for per-period saturating pulse overrides.
+
+    Each row defines a pulse inserted at a specific period of the actinic
+    waveform: period number, phase (°), duration (ms), and amplitude
+    (0–100). Call gather_data() to consolidate the rows into
+    saturating_pulse_data before reading the config. One instance is
+    created per frequency slot in Frequency_input_window.
+    """
+
     def __init__(self,
                  label="Saturating Pulse",
                  win_width=1,

@@ -5,7 +5,6 @@ from tkinter import filedialog
 import dearpygui.dearpygui as dpg
 from core.window_base import WindowBase
 from utils.json_file_manager import JsonFileManager
-from utils.data_processing import substract_bassline
 
 
 def _tk_save_file(title="Save as", filetypes=(("JSON files", "*.json"), ("All files", "*.*")),
@@ -19,6 +18,15 @@ def _tk_save_file(title="Save as", filetypes=(("JSON files", "*.json"), ("All fi
     return path or ""
 
 class Sample_container_win(WindowBase):
+    """
+    Collected results manager panel.
+
+    Each completed acquisition appends a named, checkable entry. Toggling
+    a checkbox adds or removes that series in the lineplot via the
+    ``plot_cmd`` bus event. Entries can be renamed inline and deleted via
+    right-click context menu. Selected samples can be exported to JSON.
+    """
+
     def __init__(self, label="Sample Container", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None,
                  experiment_name=None):

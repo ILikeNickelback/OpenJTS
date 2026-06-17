@@ -7,6 +7,15 @@ from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 
 class Sequence_handler_window(WindowBase):
+    """
+    Sequence loader and status panel.
+
+    Decodes all active sequence strings from the DPG input fields, stores
+    them in app_state, and displays the total run count and estimated
+    acquisition time (accounting for averaging, ignore runs, and inter-
+    sequence delays). Publishes ``sequence_list_ready`` when done.
+    """
+
     def __init__(self, label="Sequence Handler",
                  pos=None, width=None, height=None,
                  uuid=None, visible=True,

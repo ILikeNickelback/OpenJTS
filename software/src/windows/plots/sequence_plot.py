@@ -4,6 +4,15 @@ from core.window_base import WindowBase
 
 
 class Sequence_plot_window(WindowBase):
+    """
+    Read-only waveform preview panel.
+
+    Renders actinic light intensity as a shaded line series and detection
+    pulses as stems (one stem centred per contiguous detection window).
+    Updates whenever ``visualize_sequence`` is published on the bus, which
+    carries a preview dict with time_ms, actinic, and pulses arrays.
+    """
+
     def __init__(self, label="Sequence Plot", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)

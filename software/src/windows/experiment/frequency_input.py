@@ -9,6 +9,16 @@ from windows.panels.saturating_pulse import SaturatingPulseWindow
 
 
 class Frequency_input_window(WindowBase):
+    """
+    Multi-slot editor for frequency acquisition parameters.
+
+    Each slot configures one sinusoidal actinic waveform (frequency,
+    amplitude, offset, detection window). Slots have an ever-increasing
+    counter so deleted DPG tags never collide with new ones. Each slot
+    owns a SaturatingPulseWindow for per-period pulse overrides. Configs
+    are validated and stored in app_state when "Load sequences" is pressed.
+    """
+
     def __init__(self, label="Frequency Settings", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)
@@ -87,7 +97,8 @@ class Frequency_input_window(WindowBase):
             # Wave shape
             with dpg.table_row():
                 dpg.add_text("Wave", color=(150, 200, 255))
-                dpg.add_spacer(); dpg.add_spacer()
+                dpg.add_spacer()
+                dpg.add_spacer()
             self._param_row(n, "Frequency",  "freq",   "float", 60.0, "Hz")
             self._param_row(n, "Amplitude",  "amp",    "float", 50.0, "%")
             self._param_row(n, "Offset",     "offset", "float", 50.0, "%")
@@ -95,7 +106,8 @@ class Frequency_input_window(WindowBase):
             # Detection window
             with dpg.table_row():
                 dpg.add_text("Detection", color=(150, 200, 255))
-                dpg.add_spacer(); dpg.add_spacer()
+                dpg.add_spacer()
+                dpg.add_spacer()
             self._param_row(n, "Periods",  "periods", "int", 10, "")
             self._param_row(n, "Pre",      "pre",     "int",  0, "periods")
             self._param_row(n, "Post",     "post",    "int",  0, "periods")
@@ -378,12 +390,12 @@ class Frequency_input_window(WindowBase):
                 if i > 0:
                     self.add_slot()
                 n = self._active_ns[i]
-                if "frequency"      in cfg: dpg.set_value(self._st(n, "freq"),    cfg["frequency"])
-                if "amplitude"      in cfg: dpg.set_value(self._st(n, "amp"),     cfg["amplitude"])
-                if "offset"         in cfg: dpg.set_value(self._st(n, "offset"),  cfg["offset"])
-                if "nbr_of_periods" in cfg: dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
-                if "pre_detection"  in cfg: dpg.set_value(self._st(n, "pre"),     cfg["pre_detection"])
-                if "post_detection" in cfg: dpg.set_value(self._st(n, "post"),    cfg["post_detection"])
+                if "frequency"      in cfg: dpg.set_value(self._st(n, "freq"),    cfg["frequency"])       
+                if "amplitude"      in cfg: dpg.set_value(self._st(n, "amp"),     cfg["amplitude"])       
+                if "offset"         in cfg: dpg.set_value(self._st(n, "offset"),  cfg["offset"])          
+                if "nbr_of_periods" in cfg: dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])  
+                if "pre_detection"  in cfg: dpg.set_value(self._st(n, "pre"),     cfg["pre_detection"])   
+                if "post_detection" in cfg: dpg.set_value(self._st(n, "post"),    cfg["post_detection"])  
 
             self._set_status("Loaded", color=(100, 220, 100))
         except Exception as e:

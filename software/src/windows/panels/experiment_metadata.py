@@ -5,6 +5,15 @@ from core.window_base import WindowBase
 
 
 class Experiment_metadata_window(WindowBase):
+    """
+    Editable metadata form for an experiment.
+
+    Fields: operator, project, sample ID, date (defaults to today), and
+    free-text comments. All changes are written to app_state and broadcast
+    as ``metadata_updated`` on the bus so the home tab can refresh its
+    experiment list.
+    """
+
     def __init__(self, label="Overview window", pos=None, width=None, height=None,
                  uuid=None, visible=True,
                  state=None, bus=None, experiment_name=None):

@@ -31,6 +31,16 @@ def _save_file(data: dict) -> None:
 
 
 class SequenceLibraryWindow(WindowBase):
+    """
+    Persistent library for saved sequences and frequency configs.
+
+    Reads from and writes to ``config/sequences.json``. The active section
+    (Sequence_Fluo, Sequence_Spectro, Frequency_Fluo, Frequency_Spectro)
+    is determined by the current experiment and acquisition type. Each
+    entry can be previewed in the waveform plot or appended to the active
+    input window via the event bus.
+    """
+
     def __init__(self, label="Load Experiment", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)
@@ -117,8 +127,6 @@ class SequenceLibraryWindow(WindowBase):
 
         key = self._section_key()
         dpg.set_value(self._t("section_label"), f"[ {key.replace('_', '  ')} ]")
-
-        freq_mode = self._is_frequency()
 
         dpg.delete_item(table, children_only=True, slot=1)
 
