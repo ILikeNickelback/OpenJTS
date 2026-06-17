@@ -1,3 +1,5 @@
+"""Base acquisition worker thread shared by all experiment types."""
+
 #TODO fix AUTOSAVE because it crashes sometimes
 
 
@@ -32,6 +34,13 @@ class AcquisitionBaseWorker(threading.Thread):
     """
  
     def __init__(self, adc: Optional[ADCBase] = None, esp32=None):
+        """Initialise the worker thread.
+
+        Args:
+            adc: Pre-constructed ADC instance to reuse. If None, the subclass
+                `init_adc()` will create one and set `_owns_adc = True`.
+            esp32: Optional ESP32 handle passed through to subclasses.
+        """
         super().__init__(daemon=True)
         self.command_queue = queue.Queue()
         self.result_queue = queue.Queue()
@@ -60,12 +69,18 @@ class AcquisitionBaseWorker(threading.Thread):
     # GUI API
     # ---------------------------
     def send_command(self, cmd: dict) -> None:
+        """Enqueue a command dict to be processed by the worker thread.
+
+        Args:
+            cmd: Dict with at minimum an ``"action"`` key.
+        """
         self.command_queue.put(cmd)
  
     # ---------------------------
     # Thread loop
     # ---------------------------
     def run(self) -> None:
+        """Main thread loop: dispatch commands and execute acquisition steps."""
         try:
             while self.running and not self.force_stop.is_set():
                 self._process_pending_commands()
@@ -84,11 +99,16 @@ class AcquisitionBaseWorker(threading.Thread):
     # Command dispatch
     # ---------------------------
     def _process_pending_commands(self) -> None:
+        """Drain the command queue and act on each command.
+
+        Handles: ``configure``, ``start``, ``stop``, ``shutdown``.
+        Subclasses may override to handle additional actions.
+        """
         try:
             while True:
                 cmd = self.command_queue.get_nowait()
                 action = cmd.get("action")
- 
+
                 if action == "configure":
                     self.sequence = cmd["sequence"]
                     self.nbr_of_points = cmd.get("nbr_of_points")
@@ -114,6 +134,7 @@ class AcquisitionBaseWorker(threading.Thread):
     # Acquisition flow
     # ---------------------------
     def _start_acquisition(self) -> None:
+        """Reset counters, initialise the ADC, and begin acquiring."""
         self.acquiring = True
         self.current_point = 0
         self.final_values = []
@@ -125,6 +146,7 @@ class AcquisitionBaseWorker(threading.Thread):
  
  
     def _stop_acquisition(self) -> None:
+        """Flush buffered data and stop the ADC scan."""
         self.acquiring = False
         self._flush_brut_data()
         if self.adc:
@@ -137,6 +159,7 @@ class AcquisitionBaseWorker(threading.Thread):
     # Acquisition step
     # ---------------------------
     def _execute_acquisition_step(self) -> None:
+        """Read one block from the ADC and route it for processing."""
         if self.nbr_of_points and self.current_point >= self.nbr_of_points:
             self._finish_acquisition()
             return
@@ -148,6 +171,7 @@ class AcquisitionBaseWorker(threading.Thread):
         self._handle_block(raw_block)
  
     def _finish_acquisition(self) -> None:
+        """Stop the ADC and publish the final result to ``result_queue``."""
         self.acquiring = False
         self._stop_acquisition()
         self.result_queue.put({
@@ -179,6 +203,11 @@ class AcquisitionBaseWorker(threading.Thread):
     # Hardware read
     # ---------------------------
     def _read_one_point_from_adc(self):
+        """Return one raw block from the ADC, or None if not enough samples are ready.
+
+        Returns:
+            Raw block data, or None if the ADC buffer is not yet full.
+        """
         block_size = self.adc.samples_per_trigger * self.adc.nbr_of_triggers_per_sample
         if self.adc.get_status() < block_size:
             return None
@@ -188,14 +217,21 @@ class AcquisitionBaseWorker(threading.Thread):
     # Brut data persistence (frequency mode only)
     # ---------------------------
     def _buffer_brut_data(self, v: np.ndarray, point_index: int) -> None:
+        """Stage raw voltage array for the current point in the in-memory buffer.
+
+        Args:
+            v: Raw voltage array for this acquisition point.
+            point_index: Index of the current acquisition point.
+        """
         self._brut_data_buffer[str(point_index)] = v.tolist()
 
     def _flush_brut_data(self) -> None:
+        """Write the in-memory raw-data buffer to disk and clear it."""
         if not self._brut_data_buffer:
             return
         path = os.path.join(_BRUT_DATA_DIR, f"brut_data_{self.tab_name}.json")
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             data = {}
@@ -203,7 +239,7 @@ class AcquisitionBaseWorker(threading.Thread):
             "settings": self.config.get("frequency_config", {}),
             "data": self._brut_data_buffer,
         }
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         self._brut_data_buffer = {}
 
@@ -211,6 +247,17 @@ class AcquisitionBaseWorker(threading.Thread):
     # Signal processing (subclass may override)
     # ---------------------------
     def process_block(self, raw_block):
+        """Convert a raw ADC block to a scalar measurement value.
+
+        Handles both 2-trigger (sequence) and multi-trigger (frequency) modes,
+        and both ``Spectro`` and non-spectro experiment types.
+
+        Args:
+            raw_block: Raw integer samples from ``adc.read_block()``.
+
+        Returns:
+            float: Processed measurement in µV units.
+        """
         voltages = np.array([self.adc.to_voltage_32(v) for v in raw_block])
         # Each row = one trigger acquisition across all 8 channels
         v = voltages.reshape(-1, 8)
@@ -244,7 +291,6 @@ class AcquisitionBaseWorker(threading.Thread):
 
             if self.experiment_type == "Spectro":
                 pre_ratio   = pre_meas / pre_ref          # (n,) ratio per pre-flash point
-                baseline    = pre_ratio[-1]               # last pre-flash reading as baseline
                 pre_times   = np.array([0, 60, 120])
                 flash_time  = 145
                 slope, intercept = np.polyfit(pre_times, pre_ratio, 1)

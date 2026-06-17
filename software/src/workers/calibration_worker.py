@@ -1,3 +1,5 @@
+"""Acquisition worker for the detection-LED calibration loop."""
+
 from __future__ import annotations
 
 import queue
@@ -5,8 +7,9 @@ import queue
 import numpy as np
 
 from config.config import config
+from workers.base_worker import AcquisitionBaseWorker
 from hardware.adc_calibration import CalibrationAcquisitionADC
-from workers.worker import AcquisitionBaseWorker
+
 
 
 class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
@@ -21,6 +24,12 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialise the calibration worker with default detection intensity.
+
+        Args:
+            *args: Passed to `AcquisitionBaseWorker.__init__`.
+            **kwargs: Passed to `AcquisitionBaseWorker.__init__`.
+        """
         super().__init__(*args, **kwargs)
         self.detection_intensity = 100.0
 
@@ -64,6 +73,7 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
     # ADC lifecycle
     # ------------------------------------------------------------------
     def init_adc(self) -> None:
+        """Shut down any existing ADC, then create and arm a new calibration ADC."""
         if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
             self.adc.shutdown()
 
@@ -91,6 +101,7 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
         self.result_queue.put({"type": "progress", "progress": 0})
 
     def prepare_time_values(self) -> None:
+        """No-op: calibration runs indefinitely with no fixed point count or time axis."""
         # Calibration runs indefinitely — no fixed point count or time axis.
         self.time_values = None
         self.nbr_of_points = None
@@ -104,8 +115,6 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
 
         # Each row = one trigger acquisition across all 8 channels
         v = voltages.reshape(-1, 8)
-        meas = v[:, :6]   # channels 0-5: measurement
-        ref  = v[:, 6:]   # channels 6-7: reference
 
         # Sequence mode: trigger 0 = pre-flash, trigger 1 = during-flash
         pre, flash = v[0], v[1]
