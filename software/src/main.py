@@ -11,7 +11,7 @@ if __name__ == '__main__' :
     import dearpygui.dearpygui as dpg
     dpg.create_context()
 
-    from core.fonts import setup_fonts
+    from config.fonts import setup_fonts
     setup_fonts( )
 
     dpg.create_viewport(title=config['General']['app_name'], width = 1920, height = 1200, resizable=True, vsync=True)
@@ -31,10 +31,10 @@ if __name__ == '__main__' :
 
     dpg.show_viewport()
 
-    from hardware.adc_base import ADCBase
+    from hardware.adc_sequence import SequenceAcquisitionADC
     from hardware.esp32 import Esp32Base
 
-    adc_instance = ADCBase()
+    adc_instance = SequenceAcquisitionADC()
     esp32_instance = Esp32Base()
 
     from core.app_state import AppState
@@ -46,7 +46,7 @@ if __name__ == '__main__' :
     app_state.set_esp32_instance(esp32_instance)
 
     from core.layout import create_windows, get_experiment_tabs, restore_workspace
-    create_windows(adc_instance, esp32_instance, app_state, bus, main_window.control_tabs)
+    create_windows(app_state, bus, main_window.control_tabs)
     main_window.setup(app_state, bus, get_experiment_tabs, restore_workspace)
 
     while dpg.is_dearpygui_running():

@@ -1,3 +1,6 @@
+# pylint: skip-file
+
+
 import serial
 import time
 import serial.tools.list_ports
@@ -27,7 +30,7 @@ class Esp32Base:
                                      timeout=self.timeout)
             time.sleep(2)  # Required: ESP32 resets on serial open
             print(f"Connected to ESP32 on {port}")
-        except serial.SerialException as e:
+        except serial.SerialException:
             self.ser = None
             
     def disconnect(self):
@@ -50,7 +53,7 @@ class Esp32Base:
                     self.ser.write(item.encode())
                     time.sleep(0.001)
                 self.ser.write(b'>')
-        except serial.SerialException as e:
+        except serial.SerialException:
             return
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import dearpygui.dearpygui as dpg
 from loguru import logger
 
-from core.layout_manager import LayoutManager
+import core.layout_manager as layout_manager
 
 from windows.panels.experiment_metadata import Experiment_metadata_window
 from windows.panels.sequence_history import Sequence_history_window
@@ -84,24 +84,22 @@ class ExperimentTab:
     # ------------------------------------------------------------------
 
     def _build_overview(self):
-        lm = LayoutManager()
         self.metadata_win = Experiment_metadata_window(
-            **lm.get("overview", "experiment metadata"),
+            **layout_manager.get("overview", "experiment metadata"),
             state=self.state, bus=self.bus, experiment_name=self.name)
         self.history_win = Sequence_history_window(
-            **lm.get("overview", "sequence history"),
+            **layout_manager.get("overview", "sequence history"),
             state=self.state, bus=self.bus)
 
     def _build_acquisition(self):
-        lm = LayoutManager()
         self.lineplot_win         = Lineplot_win(
-            **lm.get("processing", "plot"),    state=self.state, bus=self.bus,
+            **layout_manager.get("processing", "plot"),    state=self.state, bus=self.bus,
             experiment_name=self.name)
         self.sample_container_win = Sample_container_win(
-            **lm.get("processing", "samples"), state=self.state, bus=self.bus,
+            **layout_manager.get("processing", "samples"), state=self.state, bus=self.bus,
             experiment_name=self.name)
         Acquisition_win(
-            **lm.get("processing", "acquisition"), state=self.state, bus=self.bus)
+            **layout_manager.get("processing", "acquisition"), state=self.state, bus=self.bus)
 
     def _build_setup(self):
         if self.acquisition_type == "Frequency":
@@ -110,26 +108,24 @@ class ExperimentTab:
             self._build_sequence_setup()
 
     def _build_sequence_setup(self):
-        lm = LayoutManager()
         self.sequence_input_win = Sequence_input_window(
-            **lm.get("setup", "sequence_writer"), state=self.state, bus=self.bus)
-        calibration_win(           **lm.get("setup", "calibration"),      state=self.state, bus=self.bus)
-        Background_light_window(   **lm.get("setup", "background"),       state=self.state, bus=self.bus)
-        Experiment_settings_window(**lm.get("setup", "settings"),         state=self.state, bus=self.bus)
-        Sequence_plot_window(      **lm.get("setup", "sequence_plot"),    state=self.state, bus=self.bus)
-        Sequence_handler_window(   **lm.get("setup", "sequence_handler"), state=self.state, bus=self.bus)
-        SequenceLibraryWindow(    **lm.get("setup", "Load_experiment"),  state=self.state, bus=self.bus)
+            **layout_manager.get("setup", "sequence_writer"), state=self.state, bus=self.bus)
+        calibration_win(           **layout_manager.get("setup", "calibration"),      state=self.state, bus=self.bus)
+        Background_light_window(   **layout_manager.get("setup", "background"),       state=self.state, bus=self.bus)
+        Experiment_settings_window(**layout_manager.get("setup", "settings"),         state=self.state, bus=self.bus)
+        Sequence_plot_window(      **layout_manager.get("setup", "sequence_plot"),    state=self.state, bus=self.bus)
+        Sequence_handler_window(   **layout_manager.get("setup", "sequence_handler"), state=self.state, bus=self.bus)
+        SequenceLibraryWindow(     **layout_manager.get("setup", "Load_experiment"),  state=self.state, bus=self.bus)
 
     def _build_frequency_setup(self):
-        lm = LayoutManager()
         self.frequency_input_win = Frequency_input_window(
-            **lm.get("frequency_setup", "frequency_input"),   state=self.state, bus=self.bus)
-        Sequence_plot_window(      **lm.get("frequency_setup", "sequence_plot"),     state=self.state, bus=self.bus)
-        Experiment_settings_window(**lm.get("frequency_setup", "settings"),          state=self.state, bus=self.bus)
-        SequenceLibraryWindow(    **lm.get("frequency_setup", "Load_experiment"),   state=self.state, bus=self.bus)
-        calibration_win(           **lm.get("frequency_setup", "calibration"),       state=self.state, bus=self.bus)
-        Background_light_window(   **lm.get("frequency_setup", "background"),        state=self.state, bus=self.bus)
-        Frequency_handler_window(  **lm.get("frequency_setup", "frequency_handler"), state=self.state, bus=self.bus)
+            **layout_manager.get("frequency_setup", "frequency_input"),   state=self.state, bus=self.bus)
+        Sequence_plot_window(      **layout_manager.get("frequency_setup", "sequence_plot"),     state=self.state, bus=self.bus)
+        Experiment_settings_window(**layout_manager.get("frequency_setup", "settings"),          state=self.state, bus=self.bus)
+        SequenceLibraryWindow(     **layout_manager.get("frequency_setup", "Load_experiment"),   state=self.state, bus=self.bus)
+        calibration_win(           **layout_manager.get("frequency_setup", "calibration"),       state=self.state, bus=self.bus)
+        Background_light_window(   **layout_manager.get("frequency_setup", "background"),        state=self.state, bus=self.bus)
+        Frequency_handler_window(  **layout_manager.get("frequency_setup", "frequency_handler"), state=self.state, bus=self.bus)
 
     def _build_settings(self):
         dpg.add_text("Post-processing — coming soon.")

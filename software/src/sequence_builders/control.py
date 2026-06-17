@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 from sequence_builders.decoder import sequence_decoder
 
 

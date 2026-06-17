@@ -1,14 +1,13 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from core.window_base import WindowBase
-from core.input_ouput_types import IOTypes  # still used in input_cb
  
 class Lineplot_win(WindowBase):
     LIVE_UUID = 999  # Constant to identify live data series
     def __init__(self, label="Lineplot", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None,
+                 uuid=None, visible=True, state=None, bus=None,
                  experiment_name=None, experiment_type=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus
@@ -265,23 +264,6 @@ class Lineplot_win(WindowBase):
     # INPUT HANDLER
     # --------------------------
     def input_cb(self, *args, **kwargs):
-        """
-        Handle all input types:
-          - List of lists → static plot
-          - Single floats → live stream
-          - CMD_DICT → add/remove/update series
-        """
-
-        data_type = kwargs.get("data_type")
-
-        # Handle command dictionary first
-        if data_type == IOTypes.CMD_DICT:
-            cmd = kwargs.get("cmd")
-            if not cmd:
-                return
-            self._handle_cmd(cmd)
-            return
-
         # Two lists → static/final plot
         if isinstance(args[0], list) and isinstance(args[1], list):
             self.plot_data(x=args[1], y=args[0], name="Final", UUID=12345)

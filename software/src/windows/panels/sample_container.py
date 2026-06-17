@@ -4,7 +4,6 @@ from tkinter import filedialog
 
 import dearpygui.dearpygui as dpg
 from core.window_base import WindowBase
-from core.input_ouput_types import IOTypes
 from utils.json_file_manager import JsonFileManager
 from utils.data_processing import substract_bassline
 
@@ -21,10 +20,10 @@ def _tk_save_file(title="Save as", filetypes=(("JSON files", "*.json"), ("All fi
 
 class Sample_container_win(WindowBase):
     def __init__(self, label="Sample Container", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None,
+                 uuid=None, visible=True, state=None, bus=None,
                  experiment_name=None):
 
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
         self.json = JsonFileManager()
         self.json.create_dialogs()
 
@@ -132,10 +131,10 @@ class Sample_container_win(WindowBase):
             name = self.samples_dict[UUID]["name"]
 
             cmd = {"action": "add serie", "data": {"y": y, "x": x, "name": name, "uuid": f"{self.UUID}_{UUID}"}}
-            self.trigger_cb(cmd=cmd, data_type=IOTypes.CMD_DICT)
+            self.trigger_cb(cmd=cmd)
         else:
             cmd = {"action": "remove serie", "data": {"uuid": f"{self.UUID}_{UUID}"}}
-            self.trigger_cb(cmd=cmd, data_type=IOTypes.CMD_DICT)
+            self.trigger_cb(cmd=cmd)
 
     def sample_name_cb(self, sender, app_data, user_data):
         UUID = user_data
@@ -144,7 +143,7 @@ class Sample_container_win(WindowBase):
         if new_name:
             self.samples_dict[UUID]["name"] = new_name
             cmd = {"action": "update serie name", "data": {"name": new_name, "uuid": f"{self.UUID}_{UUID}"}}
-            self.trigger_cb(cmd=cmd, data_type=IOTypes.CMD_DICT)
+            self.trigger_cb(cmd=cmd)
             if self.bus:
                 self.bus.publish("serie_renamed", series_id=UUID - 1, name=new_name)
 
@@ -154,7 +153,7 @@ class Sample_container_win(WindowBase):
             del self.samples_dict[UUID]
             dpg.delete_item(f"sample_group_{self.UUID}_{UUID}")
             cmd = {"action": "remove serie", "data": {"uuid": f"{self.UUID}_{UUID}"}}
-            self.trigger_cb(cmd=cmd, data_type=IOTypes.CMD_DICT)
+            self.trigger_cb(cmd=cmd)
 
     def select_all_samples_cb(self, sender, app_data):
         for UUID in self.samples_dict:

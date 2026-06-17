@@ -2,14 +2,14 @@ import dearpygui.dearpygui as dpg
 import time
 
 from core.window_base import WindowBase
-from core import fonts
+from config import fonts
 from workers.calibration_worker import CalibrationAcquisitionWorker
 
 
 class calibration_win(WindowBase):
     def __init__(self, label="Detection LED", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True, state=None, bus=None):
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+                 uuid=None, visible=True, state=None, bus=None):
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus

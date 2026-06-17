@@ -1,3 +1,6 @@
+#TODO fix AUTOSAVE because it crashes sometimes
+
+
 from __future__ import annotations
 
 import json

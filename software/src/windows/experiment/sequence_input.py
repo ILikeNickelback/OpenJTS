@@ -1,8 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from core.window_base import WindowBase
-from core.input_ouput_types import IOTypes
-from core import fonts
+from config import fonts
 
 from utils.json_file_manager import JsonFileManager
 from sequence_builders.control import sequence_control
@@ -11,10 +10,10 @@ from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 class Sequence_input_window(WindowBase):
     def __init__(self, label="Sequence input", pos=None, width=None, height=None,
-                 uuid=None, outputs=None, visible=True,
+                 uuid=None, visible=True,
                  state=None, bus=None):
 
-        super().__init__(label=label, uuid=uuid, outputs=outputs, visible=visible)
+        super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus

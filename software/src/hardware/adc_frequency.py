@@ -1,43 +1,50 @@
-from __future__ import annotations
+"""ADC driver subclass for frequency-domain experiments.
 
-import logging
+The board simultaneously generates a stimulus waveform (sinusoidal actinic
+light + detection pulses, built by :class:`FrequencyWaveformBuilder`) on its
+AO/digital outputs and captures the photodiode response on its AI inputs using
+a retriggered background scan.
+"""
 
 import numpy as np
 from mcculw import ul
 from mcculw.enums import (
-    ULRange,
-    FunctionType,
-    ScanOptions,
-    ChannelType,
     DigitalIODirection,
 )
 
 from config.config import config
-from hardware.adc_base import ADCBase
-from sequence_builders.frequency_waveform_builder import FrequencyWaveformBuilder
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+from sequence_builders.frequency_waveform_builder import FrequencyWaveformBuilder
+from hardware.adc_base import ADCBase
 
 
 class FrequencyAcquisitionADC(ADCBase):
-    """ADC acquisition for frequency-based experiments.
+    """ADC driver for frequency-domain experiments.
 
-    The ADC board generates the stimulus waveform (sinusoidal actinic + detection
-    pulses) and simultaneously captures the AI data.
+    Generates a multi-channel stimulus waveform (sinusoidal actinic light plus
+    detection pulses) on the board's AO/digital outputs while simultaneously
+    capturing the photodiode response on the AI inputs via a retriggered
+    background scan.
 
-    Lifecycle
-    ---------
-        configure(frequency_config) -> int   build waveform, allocate buffers
-        start_reader()                       start background reader thread (base)
-        start_acquisition()                  start AI scan + AO/digital output scan
-        -- acquisition runs --
-        stop_acquisition()                   stop all scans, free buffers
-        reset_actinic_light()                zero AO outputs after acquisition
+    Typical call order::
+
+        adc = FrequencyAcquisitionADC()
+        n_pulses = adc.configure(frequency_config)  # build waveform, allocate buffers
+        adc.start_reader()                           # start background reader thread
+        adc.start_acquisition()                      # start AI + AO/digital scans
+        # ... consume blocks via adc.read_block() ...
+        adc.stop_acquisition()                       # stop all scans, free buffers
+        adc.reset_actinic_light()                    # zero AO outputs
+
+    Attributes:
+        rate (float): ADC/DAC sampling rate in Hz, from ``config["ADC"]["sampling_rate"]``.
+        pulse_times_ms (list[float]): Timestamps (ms) of each detection pulse in the
+            waveform; populated by :meth:`configure`.
     """
 
-    def __init__(self, board_num: int | None = None):
-        super().__init__(board_num=board_num)
+    def __init__(self):
+        """Initialise the waveform builder and internal sample counters."""
+        super().__init__()
         self.rate: float = config["ADC"]["sampling_rate"]
         self._total_waveform_samples: int = 0
         self._total_acq_samples: int = 0
@@ -45,17 +52,30 @@ class FrequencyAcquisitionADC(ADCBase):
         self.pulse_times_ms: list[float] = []
 
     def configure(self, frequency_config: dict) -> int:
-        """Prepare buffers, waveform data, and board registers.
+        """Build the stimulus waveform, allocate DMA buffers, and arm the AI scan.
 
-        Returns the number of logical acquisition points so the worker can set
-        nbr_of_points without having to know waveform internals.
+        Configures all digital ports as outputs, builds an interleaved
+        AO+digital waveform, copies it into the 16-bit DMA buffer, allocates
+        the 32-bit acquisition buffer, and writes the trigger count register.
+
+        Args:
+            frequency_config: Frequency experiment parameters dict (from config
+                or the UI), passed directly to :class:`FrequencyWaveformBuilder`.
+
+        Returns:
+            Number of detection pulses in the waveform.  The worker uses this
+            to know how many trigger blocks to expect.
         """
         for port in self.dev_info.get_dio_info().port_info:
             if port.is_port_configurable:
                 ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
 
+        interleaved, self._total_waveform_samples, number_of_pulses = (
+            self._waveform_builder.build(frequency_config)
+        )
+        
+        #Activate this line to debug waveform generation
         # self._waveform_builder.plot(frequency_config)
-        interleaved, self._total_waveform_samples, number_of_pulses = (self._waveform_builder.build(frequency_config))
         self.pulse_times_ms = self._waveform_builder.pulse_times_ms
 
         self.nbr_of_triggers_per_sample = 1 + config["Sampling"].get("number_of_points_before_flash", 1)
@@ -70,50 +90,3 @@ class FrequencyAcquisitionADC(ADCBase):
         self._configure_trigger_count()
 
         return number_of_pulses
-
-    def start_acquisition(self) -> None:
-        """Start AI scan (retriggered background) then AO/digital output scan."""
-        self._start_ai_scan(self._total_acq_samples)
-
-        ao_range = self.dev_info.get_ao_info().supported_ranges[0]
-        ul.daq_out_scan(
-            self.board_num,
-            [0, 1, 1],
-            [ChannelType.ANALOG, ChannelType.ANALOG, ChannelType.DIGITAL],
-            [ao_range, ao_range, ULRange.NOTUSED],
-            3,
-            self.rate,
-            self._total_waveform_samples * 3,
-            self._memhandle,
-            options=(
-                ScanOptions.BACKGROUND
-                | ScanOptions.CONTINUOUS
-            )
-        )
-
-    def stop_acquisition(self) -> None:
-        try:
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.AIFUNCTION)
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
-        finally:
-            self._free_acq_buffer()
-            self._free_waveform_buffer()
-
-    def reset_actinic_light(self) -> None:
-        """Zero both AO channels by outputting a two-sample flat waveform."""
-        self._alloc_waveform_buffer_16(2)
-        if self._c_waveform_array is not None:
-            arr_view = np.ctypeslib.as_array(self._c_waveform_array, shape=(2,))
-            arr_view[:] = [0, 0]
-
-        ao_range = self.dev_info.get_ao_info().supported_ranges[0]
-        ul.a_out_scan(
-            board_num=self.board_num,
-            low_chan=0,
-            high_chan=1,
-            num_points=1,
-            rate=1,
-            ul_range=ao_range,
-            memhandle=self._memhandle,
-            options=None,
-        )
