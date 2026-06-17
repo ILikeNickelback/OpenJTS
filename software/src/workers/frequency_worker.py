@@ -1,9 +1,11 @@
+"""Acquisition worker for frequency-based (multi-trigger) experiments."""
+
 from __future__ import annotations
 
 import numpy as np
 
 from hardware.adc_frequency import FrequencyAcquisitionADC
-from workers.worker import AcquisitionBaseWorker
+from workers.base_worker import AcquisitionBaseWorker
 
 
 class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
@@ -18,6 +20,11 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
     """
 
     def init_adc(self) -> None:
+        """Shut down any existing ADC, then create and configure a frequency ADC.
+
+        Calls ``adc.configure()`` with the frequency config dict, which returns
+        the real point count and overwrites ``self.nbr_of_points``.
+        """
         if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
             self.adc.shutdown()
 
@@ -36,6 +43,12 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         self.adc.start_reader()
 
     def prepare_time_values(self) -> None:
+        """Populate ``self.time_values`` with per-point timestamps in milliseconds.
+
+        Uses ``adc.pulse_times_ms`` when available; otherwise reconstructs a
+        linear time axis from the frequency config (frequency, pre/post periods).
+        Sets ``self.time_values`` to None if no point count is known.
+        """
         if self.nbr_of_points is None or self.nbr_of_points == 0:
             self.time_values = None
             return

@@ -1,3 +1,27 @@
+"""Application entry point for OpenJTS.
+
+Startup sequence
+----------------
+1. ``multiprocessing.freeze_support()`` — required for Windows frozen builds.
+2. DearPyGUI context, viewport (1920×1200, maximised), and fonts are
+   initialised before any window objects are created.
+3. Per-monitor DPI awareness is set via the Win32 shcore API so the UI
+   renders crisply on high-DPI displays.  The thread execution state is
+   also locked to prevent the display from sleeping during long acquisitions.
+4. ``Main_win`` builds the primary window and menu bar.
+5. Hardware instances (ADC, ESP32) and shared application objects
+   (``AppState``, ``EventBus``) are constructed and wired together.
+6. ``create_windows`` populates the tab bar and registers the experiment-
+   creation callback; ``main_window.setup`` hands it the workspace
+   save/restore hooks.
+7. The explicit render loop runs until the user closes the window.
+8. On exit, all experiment tabs are shut down (stopping worker threads),
+   hardware is disconnected, and the DPG context is destroyed.
+
+All imports that depend on the DPG context are deferred into the
+``if __name__ == '__main__'`` block to prevent import-time side effects
+when this module is loaded by multiprocessing worker processes.
+"""
 import multiprocessing
 from pathlib import Path
 
@@ -51,5 +75,10 @@ if __name__ == '__main__' :
 
     while dpg.is_dearpygui_running():
         dpg.render_dearpygui_frame()
+
+    for tab in get_experiment_tabs().values():
+        tab.shutdown()
+    adc_instance.shutdown()
+    esp32_instance.disconnect()
 
     dpg.destroy_context()

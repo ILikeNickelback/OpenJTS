@@ -5,6 +5,15 @@ from core.window_base import WindowBase
 
 
 class Sequence_history_window(WindowBase):
+    """
+    Append-only log of completed sequence acquisitions.
+
+    Each ``final_data`` bus event appends a timestamped entry showing the
+    sequence string, run number, and averaging count. Date headers are
+    inserted automatically when the date changes between entries. The full
+    history list is preserved for workspace save/restore.
+    """
+
     def __init__(self, label="Sequence history", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)

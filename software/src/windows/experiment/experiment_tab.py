@@ -24,10 +24,24 @@ from windows.experiment.acquisition import Acquisition_win
 
 class ExperimentTab:
     """
-    Content for a single Experiment tab.
+    Content for a single experiment tab in the main window.
 
-    Internally it renders its own nested tab bar with sub-tabs.
-    Sub-tabs are defined in _SUB_TABS — add your real builders there.
+    Owns a nested tab bar with four sub-tabs:
+
+    - **Overview** — experiment metadata form and sequence history log.
+    - **Setup** — sequence editor (or frequency editor for frequency
+      acquisition) plus calibration, background light, settings, preview
+      plot, and the sequence library.
+    - **Acquisition** — lineplot, sample container, and acquisition
+      control panel.
+    - **Post-processing** — placeholder for future analysis tools.
+
+    Each instance holds references to the window objects it creates so
+    they can be reached for workspace save/restore and graceful shutdown.
+    Sub-tab builders are resolved by name from ``_SUB_TABS`` at
+    ``build_content()`` time, so adding a new sub-tab only requires
+    appending to that list and writing the corresponding ``_build_*``
+    method.
     """
 
     _SUB_TABS = [
@@ -52,6 +66,8 @@ class ExperimentTab:
         self.lineplot_win          = None
         self.metadata_win          = None
         self.sample_container_win: Sample_container_win | None = None
+        self.acquisition_win       = None
+        self.calibration_win       = None
 
         if bus:
             bus.subscribe("final_data", self._autosave)
@@ -63,6 +79,14 @@ class ExperimentTab:
     # ------------------------------------------------------------------
 
     def build_content(self):
+        """Build the nested sub-tab bar inside the parent tab.
+
+        Called by TabbedWindowManager immediately after the parent tab is
+        created. Iterates ``_SUB_TABS``, creates a DPG tab for each entry,
+        and calls the corresponding ``_build_*`` method. Builder exceptions
+        are caught and logged so one broken sub-tab does not prevent the
+        rest from rendering.
+        """
         with dpg.tab_bar():
             for sub_label, method_name in self._SUB_TABS:
                 with dpg.tab(label=sub_label):
@@ -98,7 +122,7 @@ class ExperimentTab:
         self.sample_container_win = Sample_container_win(
             **layout_manager.get("processing", "samples"), state=self.state, bus=self.bus,
             experiment_name=self.name)
-        Acquisition_win(
+        self.acquisition_win = Acquisition_win(
             **layout_manager.get("processing", "acquisition"), state=self.state, bus=self.bus)
 
     def _build_setup(self):
@@ -110,7 +134,7 @@ class ExperimentTab:
     def _build_sequence_setup(self):
         self.sequence_input_win = Sequence_input_window(
             **layout_manager.get("setup", "sequence_writer"), state=self.state, bus=self.bus)
-        calibration_win(           **layout_manager.get("setup", "calibration"),      state=self.state, bus=self.bus)
+        self.calibration_win = calibration_win(**layout_manager.get("setup", "calibration"), state=self.state, bus=self.bus)
         Background_light_window(   **layout_manager.get("setup", "background"),       state=self.state, bus=self.bus)
         Experiment_settings_window(**layout_manager.get("setup", "settings"),         state=self.state, bus=self.bus)
         Sequence_plot_window(      **layout_manager.get("setup", "sequence_plot"),    state=self.state, bus=self.bus)
@@ -123,12 +147,23 @@ class ExperimentTab:
         Sequence_plot_window(      **layout_manager.get("frequency_setup", "sequence_plot"),     state=self.state, bus=self.bus)
         Experiment_settings_window(**layout_manager.get("frequency_setup", "settings"),          state=self.state, bus=self.bus)
         SequenceLibraryWindow(     **layout_manager.get("frequency_setup", "Load_experiment"),   state=self.state, bus=self.bus)
-        calibration_win(           **layout_manager.get("frequency_setup", "calibration"),       state=self.state, bus=self.bus)
+        self.calibration_win = calibration_win(**layout_manager.get("frequency_setup", "calibration"), state=self.state, bus=self.bus)
         Background_light_window(   **layout_manager.get("frequency_setup", "background"),        state=self.state, bus=self.bus)
         Frequency_handler_window(  **layout_manager.get("frequency_setup", "frequency_handler"), state=self.state, bus=self.bus)
 
     def _build_settings(self):
         dpg.add_text("Post-processing — coming soon.")
+
+    # ------------------------------------------------------------------
+    # Shutdown
+    # ------------------------------------------------------------------
+
+    def shutdown(self):
+        """Stop all background threads owned by this tab."""
+        if self.acquisition_win:
+            self.acquisition_win.shutdown()
+        if self.calibration_win:
+            self.calibration_win.shutdown()
 
     # ------------------------------------------------------------------
     # Workspace save / restore
@@ -148,7 +183,14 @@ class ExperimentTab:
             logger.exception("Autosave failed")
 
     def collect_save_data(self) -> dict:
-        """Gather all experiment data for workspace serialisation."""
+        """Return a serialisable snapshot of all experiment data.
+
+        Collects metadata, sequence strings, per-sequence parameters,
+        sequence history, final results, sample container entries, and
+        frequency configs. Parameters are re-keyed from stable n-values
+        to 1-based display positions so the saved file is position-stable
+        across add/delete operations.
+        """
         # Metadata from state
         exp_entry = next(
             (e for e in self.state.get_experiments() if e["name"] == self.name), {}
@@ -210,7 +252,14 @@ class ExperimentTab:
         }
 
     def restore_from_data(self, data: dict):
-        """Restore experiment state from a saved data dict."""
+        """Restore experiment state from a ``collect_save_data`` snapshot.
+
+        Pushes metadata back into app_state, reloads sequence strings,
+        re-maps position-keyed parameters back to n-keyed storage,
+        replays sequence history, and hands results to both the lineplot
+        and the sample container. Must be called after ``build_content()``
+        so all child window references are already set.
+        """
         # Restore metadata into state and notify listeners
         metadata = data.get("metadata", {})
         for key, value in metadata.items():

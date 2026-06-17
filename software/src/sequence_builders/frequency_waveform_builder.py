@@ -316,7 +316,7 @@ class FrequencyWaveformBuilder:
                 (typically 10 µs × rate).
             rate: Output sample rate in Hz, used to compute ``inter_pulse_gap``.
         """
-        inter_pulse_gap = int(rate * 5 * 10e-6)   # 5 µs spacing between pulses
+        inter_pulse_gap = int(rate * 5 * 10e-6)   # 50 µs spacing between pulses
 
         # ---- points_before_flash pre-pulses BEFORE the analog pulse ----
         # Last pre-pulse ends flush at pulse_start; earlier ones step back by inter_pulse_gap

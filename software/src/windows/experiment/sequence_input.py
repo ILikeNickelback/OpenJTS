@@ -9,6 +9,16 @@ from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 
 class Sequence_input_window(WindowBase):
+    """
+    Multi-slot sequence text editor.
+
+    Each slot is a labelled multiline input holding a raw sequence string.
+    Slots use an ever-increasing counter so deleted DPG tags never collide
+    with new ones. Supports add, delete, visualize, and per-sequence
+    parameter access. Position labels (Sequence 1, 2, …) are kept in sync
+    with app_state via _sync_state after every structural change.
+    """
+
     def __init__(self, label="Sequence input", pos=None, width=None, height=None,
                  uuid=None, visible=True,
                  state=None, bus=None):

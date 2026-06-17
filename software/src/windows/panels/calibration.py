@@ -7,6 +7,16 @@ from workers.calibration_worker import CalibrationAcquisitionWorker
 
 
 class calibration_win(WindowBase):
+    """
+    Detection LED calibration panel.
+
+    Flashes the detection LED at 1 Hz via a CalibrationAcquisitionWorker
+    thread and displays live measurement and reference channel readings.
+    The polling loop uses DPG frame callbacks (one per rendered frame) to
+    drain the worker's result queue on the main thread. Intensity changes
+    are forwarded to the running worker in real time.
+    """
+
     def __init__(self, label="Detection LED", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)
@@ -136,9 +146,11 @@ class calibration_win(WindowBase):
         dpg.configure_item(self._t("toggle"), enabled=connected)
         if not self._flashing:
             if connected:
-                dpg.configure_item(self._t("status"), default_value="Ready", color=(180, 180, 180))
+                dpg.set_value(self._t("status"), "Ready")
+                dpg.configure_item(self._t("status"), color=(180, 180, 180))
             else:
-                dpg.configure_item(self._t("status"), default_value="ADC not connected", color=(255, 80, 80))
+                dpg.set_value(self._t("status"), "ADC not connected")
+                dpg.configure_item(self._t("status"), color=(255, 80, 80))
 
     # ------------------------------------------------------------------
     # Flash toggle
@@ -152,7 +164,8 @@ class calibration_win(WindowBase):
     def _start_flash(self):
         adc = self.state.get_adc_instance() if self.state else None
         if adc is None or (hasattr(adc, "is_connected") and not adc.is_connected()):
-            dpg.configure_item(self._t("status"), default_value="ADC not connected", color=(255, 80, 80))
+            dpg.set_value(self._t("status"), "ADC not connected")
+            dpg.configure_item(self._t("status"), color=(255, 80, 80))
             dpg.configure_item(self._t("toggle"), enabled=False)
             return
 
@@ -176,7 +189,8 @@ class calibration_win(WindowBase):
 
         self._flashing = True
         dpg.set_item_label(self._t("toggle"), "Stop flash  (1 Hz)")
-        dpg.configure_item(self._t("status"), default_value="Flashing", color=(255, 200, 60))
+        dpg.set_value(self._t("status"), "Flashing")
+        dpg.configure_item(self._t("status"), color=(255, 200, 60))
 
         self.polling_enabled = True
         if not self.polling_scheduled:
@@ -200,7 +214,8 @@ class calibration_win(WindowBase):
         self.polling_scheduled = False
 
         dpg.set_item_label(self._t("toggle"), "Start flash  (1 Hz)")
-        dpg.configure_item(self._t("status"), default_value="Ready", color=(180, 180, 180))
+        dpg.set_value(self._t("status"), "Ready")
+        dpg.configure_item(self._t("status"), color=(180, 180, 180))
         dpg.set_value(self._t("di"),  "—")
         dpg.set_value(self._t("ref"), "—")
 

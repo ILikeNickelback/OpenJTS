@@ -8,3 +8,6 @@ platforms = ["win-64"]
 OpenJTS = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+
+[tool.ruff.lint]
+ignore = ["E701"]

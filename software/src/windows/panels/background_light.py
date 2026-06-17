@@ -5,6 +5,15 @@ from config import fonts
 
 
 class Background_light_window(WindowBase):
+    """
+    Actinic (background) light intensity control panel.
+
+    Provides a slider and a fine-adjust float input that stay in sync.
+    The light must be toggled ON before intensity changes are sent to the
+    ADC. Each change is also published on the bus as
+    ``background_light_changed`` so the acquisition worker can pick it up.
+    """
+
     def __init__(self, label="Actinic Light", pos=None, width=None, height=None,
                  uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)
