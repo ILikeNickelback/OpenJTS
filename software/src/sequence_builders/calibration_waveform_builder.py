@@ -1,7 +1,15 @@
+"""Single-period calibration waveform builder for the detection LED.
+
+Produces a 3-channel interleaved ``uint16`` array that drives AO channels 0–1
+and one digital channel via ``daq_out_scan`` in ``CONTINUOUS`` mode, looping
+the waveform indefinitely until the caller stops the scan.
+"""
+
 from __future__ import annotations
 
 import numpy as np
 from mcculw.device_info import DaqDeviceInfo
+import matplotlib.pyplot as plt
 
 from config.config import config
 
@@ -9,23 +17,38 @@ from config.config import config
 class CalibrationWaveformBuilder:
     """Build a single-period calibration waveform meant to loop continuously.
 
-    3-channel interleaved array  [ch0, ch1, ch2,  ch0, ch1, ch2, ...]
-        ch0  — actinic (always 0 — calibration uses no background light)
-        ch1  — analog detection pulses (N evenly-spaced pulses per period)
-        ch2  — digital markers (start + end flanking every analog pulse)
+    Produces a 3-channel interleaved array ``[ch0, ch1, ch2, ch0, ch1, ch2, …]``
+    where:
 
-    The buffer represents exactly one period of the flash pattern.
-    The caller plays it with ScanOptions.CONTINUOUS so the hardware
-    loops forever until explicitly stopped.
+    - **ch0** — actinic light (always 0; calibration uses no background light)
+    - **ch1** — analog detection pulses (N evenly-spaced pulses per period)
+    - **ch2** — digital markers (start + end flanking every analog pulse)
 
-    Returns
-    -------
-    build() -> (interleaved: np.ndarray[uint16],
-                samples_per_period: int,
-                pulses_per_period: int)
+    The buffer represents exactly one period of the flash pattern.  Pass it to
+    ``daq_out_scan`` with ``ScanOptions.CONTINUOUS`` so the hardware loops
+    until explicitly stopped.
+
+    Typical usage::
+
+        builder = CalibrationWaveformBuilder(board_num, rate)
+        interleaved, samples_per_period, pulses_per_period = builder.build(
+            config["Calibration"], intensity=80.0
+        )
+
+    Attributes:
+        board_num (int): MCC DAQ board index.
+        rate (float): Output sample rate in Hz.
+        dev_info (DaqDeviceInfo | None): Board capability descriptor, or
+            ``None`` when the board is unavailable (e.g. in unit tests).
     """
 
-    def __init__(self, board_num: int, rate: float):
+    def __init__(self, board_num: int, rate: float) -> None:
+        """Initialise the builder and probe the DAQ board.
+
+        Args:
+            board_num: MCC DAQ board index passed to ``DaqDeviceInfo``.
+            rate: Output sample rate in Hz used for all timing calculations.
+        """
         self.board_num = board_num
         self.rate = rate
         try:
@@ -34,6 +57,32 @@ class CalibrationWaveformBuilder:
             self.dev_info = None
 
     def build(self, calibration_config: dict, intensity: float = 100.0) -> tuple[np.ndarray, int, int]:
+        """Build the interleaved waveform for one calibration period.
+
+        Reads ``frequency`` and ``normal_pulses_per_period`` from
+        *calibration_config*, falling back to ``config["Sampling"]`` for the
+        pulse count if the key is absent.  Pulse positions are evenly spaced
+        across the period starting at sample 4.
+
+        Args:
+            calibration_config: Dict containing at minimum ``"frequency"`` (Hz).
+                Optional key ``"normal_pulses_per_period"`` overrides the
+                global sampling default.
+            intensity: Detection LED intensity as a percentage (0–100).
+                Values outside this range are clamped.
+
+        Returns:
+            A 3-tuple of:
+            - **interleaved** (``np.ndarray[uint16]``): Flat array of length
+              ``samples_per_period * 3`` ready for ``daq_out_scan``.
+            - **samples_per_period** (``int``): Number of samples per channel
+              per period (``rate / frequency``).
+            - **pulses_per_period** (``int``): Number of analog pulses placed
+              in the period.
+
+        Raises:
+            ValueError: If *frequency* is zero or negative.
+        """
         freq              = float(calibration_config.get("frequency", 1.0))
         pulses_per_period = int(calibration_config.get("normal_pulses_per_period",
                                 config["Sampling"].get("normal_pulses_per_period", 10)))
@@ -43,32 +92,26 @@ class CalibrationWaveformBuilder:
 
         samples_per_period = int(self.rate / freq)
 
-        # --- Allocate interleaved array and create per-channel views ---
         interleaved = np.zeros(samples_per_period * 3, dtype=np.uint16)
-        ch0_raw = interleaved[0::3]   # actinic — stays zero
         ch1_raw = interleaved[1::3]   # analog detection pulses
         ch2_raw = interleaved[2::3]   # digital markers
 
         counts_max          = 65535
         pulse_amplitude     = int(counts_max * max(0.0, min(100.0, intensity)) / 100.0)
-        pulse_width_samples = max(1, int(self.rate * 20e-6)) 
+        pulse_width_samples = max(1, int(self.rate * 20e-6))
         digital_width       = max(1, int(self.rate * 10e-6))
 
-        # Evenly distribute pulses across the period
         positions = np.linspace(4, samples_per_period, pulses_per_period,
                                 endpoint=False, dtype=int)
 
         for pos in positions:
             pulse_end = min(int(pos) + pulse_width_samples, samples_per_period)
 
-            # Analog pulse scaled by intensity
             ch1_raw[pos+1:pulse_end+1] = pulse_amplitude
 
-            # Digital start marker (before the pulse)
             d_start_end = min(int(pos) + digital_width, samples_per_period)
             ch2_raw[pos:d_start_end] = 0xFFFF
 
-            # Digital end marker (after the pulse)
             d_end_start = pulse_end
             d_end_end   = min(d_end_start + digital_width, samples_per_period)
             if d_end_start < samples_per_period:
@@ -76,12 +119,21 @@ class CalibrationWaveformBuilder:
 
         return interleaved, samples_per_period, pulses_per_period
 
-
-
     def plot(self, frequency_config: dict) -> None:
-        """Open a matplotlib window showing ch0 (actinic), ch1 (analog flashes), and ch2 (detection markers)."""
-        import matplotlib.pyplot as plt
+        """Open a matplotlib window showing the three output channels.
 
+        Calls :meth:`build` with *frequency_config* and plots ch0 (actinic),
+        ch1 (analog flashes), and ch2 (detection markers) on a shared time
+        axis.  Pre- and post-detection dead zones are shaded grey when
+        ``"pre_detection"`` or ``"post_detection"`` keys are present in
+        *frequency_config*.
+
+        Args:
+            frequency_config: Dict passed directly to :meth:`build`.  Should
+                contain ``"frequency"`` (Hz) and optionally
+                ``"pre_detection"`` and ``"post_detection"`` (period counts)
+                for dead-zone shading.
+        """
         interleaved, total_samples, _ = self.build(frequency_config)
         ch0 = interleaved[0::3]
         ch1 = interleaved[1::3]
@@ -110,7 +162,6 @@ class CalibrationWaveformBuilder:
         axes[2].set_title("Ch2 — detection markers")
         axes[2].set_xlabel("Time (ms)")
 
-        # Shade pre/post periods in light grey so dead zones are obvious
         freq = float(frequency_config["frequency"])
         pre_periods = int(frequency_config.get("pre_detection", 0))
         post_periods = int(frequency_config.get("post_detection", 0))

@@ -73,7 +73,9 @@ class FrequencyAcquisitionADC(ADCBase):
         interleaved, self._total_waveform_samples, number_of_pulses = (
             self._waveform_builder.build(frequency_config)
         )
-        self._waveform_builder.plot(frequency_config)
+        
+        #Activate this line to debug waveform generation
+        # self._waveform_builder.plot(frequency_config)
         self.pulse_times_ms = self._waveform_builder.pulse_times_ms
 
         self.nbr_of_triggers_per_sample = 1 + config["Sampling"].get("number_of_points_before_flash", 1)

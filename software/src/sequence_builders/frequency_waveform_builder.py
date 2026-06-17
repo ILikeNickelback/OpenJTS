@@ -1,27 +1,118 @@
+"""Interleaved 3-channel waveform builder for frequency-modulated LED acquisitions.
+
+Produces a ``uint16`` interleaved array driving AO channels 0–1 and one digital
+channel via ``daq_out_scan``.  The resulting waveform encodes a sine-wave
+actinic background (ch0), evenly-spaced analog detection flashes (ch1), and
+the corresponding digital acquisition triggers (ch2).
+"""
+
 from __future__ import annotations
+
 import numpy as np
-from mcculw import ul
 from mcculw.device_info import DaqDeviceInfo
 from config.config import config
+import matplotlib.pyplot as plt
+
 
 class FrequencyWaveformBuilder:
-    """Build the interleaved 3-channel waveform used by FrequencyAcquisitionADC.
+    """Build the interleaved 3-channel waveform used by ``FrequencyAcquisitionADC``.
 
-    Produces a numpy.uint16 interleaved array [ch0,ch1,ch2, ch0,ch1,ch2, ...]
+    Produces a ``numpy.uint16`` interleaved array
+    ``[ch0, ch1, ch2, ch0, ch1, ch2, …]`` where:
+
+    - **ch0** — sinusoidal actinic light, clamped to background level during
+      pre/post periods and saturated during override windows.
+    - **ch1** — 20 µs analog detection flashes at a global evenly-spaced grid,
+      replaced by denser override pulses inside saturating windows.
+    - **ch2** — digital acquisition markers: ``points_before_flash`` pre-pulses
+      plus one during-pulse around each ch1 flash.
+
+    After :meth:`build` returns, ``self.pulse_times_ms`` holds the time of
+    every digital trigger event (in ms), which callers use to build the
+    measurement time axis.
+
+    Typical usage::
+
+        builder = FrequencyWaveformBuilder(board_num, rate)
+        interleaved, total_samples, n_pulses = builder.build(frequency_config)
+        times_ms = builder.pulse_times_ms
+
+    Attributes:
+        board_num (int): MCC DAQ board index.
+        rate (float): Output sample rate in Hz.
+        dev_info (DaqDeviceInfo): Board capability descriptor used to query the
+            AO voltage range.
+        points_before_flash (int): Number of digital pre-pulses written before
+            each analog flash (from ``config["Sampling"]``).
+        counts_max (int): Full-scale DAC count value (65535 for 16-bit).
+        dark_window (int): Extra samples cleared on each side of a saturating
+            flash to ensure the detector is unlit during acquisition.
+        actinic_light_offset (int): DAC count offset applied to ch0 to
+            compensate for LED non-linearity (from ``config["LED"]``).
+        pulse_times_ms (list[float]): Populated by :meth:`build` — the time in
+            ms of each digital trigger event, excluding the final boundary
+            point.
     """
 
-    def __init__(self, board_num: int, rate: float):
+    def __init__(self, board_num: int, rate: float) -> None:
+        """Initialise the builder, probe the DAQ board, and load config values.
+
+        Args:
+            board_num: MCC DAQ board index passed to ``DaqDeviceInfo``.
+            rate: Output sample rate in Hz used for all timing calculations.
+        """
         self.board_num = board_num
         self.rate = rate
         self.dev_info = DaqDeviceInfo(self.board_num)
-        self.points_before_flash = config["Sampling"].get("number_of_points_before_flash",1)
+        self.points_before_flash = config["Sampling"].get("number_of_points_before_flash", 1)
         self.counts_max = 65535
         self.dark_window = 120
+        self.actinic_light_offset = config["LED"]["actinic_light_offset"]
         self.pulse_times_ms: list[float] = []
 
     def build(self, frequency_config: dict) -> tuple[np.ndarray, int, int]:
-        """Return interleaved waveform as np.uint16 array and total_samples (per channel)."""
-        
+        """Build the full interleaved waveform for a frequency-sweep acquisition.
+
+        Constructs all three channels in a single pre-allocated ``uint16``
+        array.  Saturating-pulse windows override both the actinic sine (ch0)
+        and the normal flash grid (ch1/ch2) with denser pulses and a dark
+        blanking window.
+
+        The method also populates ``self.pulse_times_ms`` as a side effect —
+        callers that need the time axis should read it after this call returns.
+
+        Required keys in *frequency_config*:
+
+        - ``"frequency"`` (float): Actinic modulation frequency in Hz.
+        - ``"nbr_of_periods"`` (int): Number of active (sine-wave) periods.
+
+        Optional keys in *frequency_config*:
+
+        - ``"pre_detection"`` (int, default 0): Silent periods before the sine.
+        - ``"post_detection"`` (int, default 0): Silent periods after the sine.
+        - ``"background_light_data"`` (float, default 0): Background intensity
+          (% of full scale) used to phase the sine and fill dead periods.
+        - ``"amplitude"`` (float, default 1.0): Sine amplitude in % of full scale.
+        - ``"offset"`` (float, default 0.0): Sine DC offset in % of full scale.
+        - ``"normal_pulses_per_period"`` (int): Flash count per period; falls
+          back to ``config["Sampling"]["normal_pulses_per_period"]`` (default 10).
+        - ``"saturating_pulse_data"`` (dict | None): Mapping of override windows.
+          Each value must contain ``"period_number"``, ``"degree"``, and
+          ``"duration_ms"``.
+
+        Args:
+            frequency_config: Configuration dict for this acquisition (see above).
+
+        Returns:
+            A 3-tuple of:
+
+            - **interleaved** (``np.ndarray[uint16]``): Flat array of length
+              ``total_samples * 3`` ready for ``daq_out_scan``.
+            - **total_samples** (``int``): Number of samples per channel across
+              all periods (pre + active + post).
+            - **length** (``int``): Number of digital trigger events emitted
+              (equals ``len(self.pulse_times_ms)``).
+        """
         ao_info = self.dev_info.get_ao_info()
         ao_range = ao_info.supported_ranges[0]
 
@@ -31,14 +122,13 @@ class FrequencyWaveformBuilder:
         post_periods = int(frequency_config.get("post_detection", 0))
         saturating_pulse_data = frequency_config.get("saturating_pulse_data", None)
         background_light_data = frequency_config.get("background_light_data", 0)
-        self.actinic_light_offset = config["LED"]["actinic_light_offset"]
-        
+
         samples_per_period = int(self.rate / freq)
         total_periods = pre_periods + periods + post_periods
         total_samples = samples_per_period * total_periods
         pulse_width_samples = int(self.rate * 20e-6)  # 20 µs
 
-        normal_pulses = frequency_config.get("normal_pulses_per_period", config["Frequency"].get("normal_pulses_per_period", 10))
+        normal_pulses = frequency_config.get("normal_pulses_per_period", config["Sampling"].get("normal_pulses_per_period", 10))
 
         # ---- Precompute saturating-pulse windows and the flash pulses inside them ----
         saturating_overrides = []
@@ -55,7 +145,7 @@ class FrequencyWaveformBuilder:
         ch0_raw = interleaved[0::3]
         ch1_raw = interleaved[1::3]
         ch2_raw = interleaved[2::3]
-        
+
         # ---- Channel 0: Sine wave with overrides ----
         t = np.arange(total_samples) / self.rate
         amplitude = frequency_config.get("amplitude", 1.0)
@@ -151,7 +241,7 @@ class FrequencyWaveformBuilder:
             pulse_end = min(pos + pulse_width_samples, total_samples)
             self.write_pulse_markers(
                 ch2_raw, pos, pulse_end,
-                total_samples, digital_pulse_width,
+                digital_pulse_width,
                 self.rate
             )
 
@@ -166,7 +256,7 @@ class FrequencyWaveformBuilder:
                 pulse_end = min(pulse_start + pulse_width_samples, end)
                 self.write_pulse_markers(
                     ch2_raw, pulse_start, pulse_end,
-                    total_samples, digital_pulse_width,
+                    digital_pulse_width,
                     self.rate
                 )
 
@@ -192,33 +282,43 @@ class FrequencyWaveformBuilder:
         print(f"Total digital pulses generated: {length}")
 
         return interleaved, total_samples, length
-    
-    
+
     def write_pulse_markers(
         self,
         ch2_raw: np.ndarray,
         pulse_start: int,
         pulse_end: int,
-        total_samples: int,
         digital_pulse_width: int,
         rate: float,
     ) -> None:
-        """Write N pre-pulses, 1 during-pulse, and N post-pulses around an analog pulse.
+        """Write digital acquisition markers around a single analog flash.
+
+        Places ``self.points_before_flash`` evenly-spaced pre-pulses immediately
+        before the analog pulse, then one during-pulse at the very start of the
+        flash.  All pulses are written at full scale (``self.counts_max``).
+
+        Pre-pulse spacing is 5 µs (``inter_pulse_gap``).  The last pre-pulse
+        ends flush with *pulse_start*; earlier ones step back by
+        ``inter_pulse_gap`` each.  Pre-pulses that would start before sample 0
+        are silently skipped.
+
+        The during-pulse starts 3 samples into the analog flash and is clamped
+        to end no later than *pulse_end*.  A warning is printed if
+        *pulse_end* is so short that the during-pulse falls entirely outside
+        the flash window.
 
         Args:
-            ch2_raw:             Digital channel array (modified in place).
-            pulse_start:         Sample index where the analog pulse starts.
-            pulse_end:           Sample index where the analog pulse ends.
-            total_samples:       Total number of samples in the waveform.
-            digital_pulse_width: Width of each digital pulse in samples.
-            rate:                Sample rate in Hz.
-            N:                   Number of pulses before and after the analog pulse.
-            T_delay:             Delay in seconds after pulse_end before post-pulses begin.
+            ch2_raw: Digital channel view of the interleaved array, modified
+                in place.
+            pulse_start: Sample index where the analog flash starts.
+            pulse_end: Sample index where the analog flash ends (exclusive).
+            digital_pulse_width: Width in samples of each digital marker pulse
+                (typically 10 µs × rate).
+            rate: Output sample rate in Hz, used to compute ``inter_pulse_gap``.
         """
-        inter_pulse_gap = int(rate * 5*10e-6)   # 5 µs spacing between pulses
-        delay_samples = int(rate * self.points_before_flash)  # delay after main pulse before post-pulses start
+        inter_pulse_gap = int(rate * 5 * 10e-6)   # 5 µs spacing between pulses
 
-        # ---- N pulses BEFORE the analog pulse ----
+        # ---- points_before_flash pre-pulses BEFORE the analog pulse ----
         # Last pre-pulse ends flush at pulse_start; earlier ones step back by inter_pulse_gap
         for i in range(self.points_before_flash):
             p_end = pulse_start - (self.points_before_flash - 1 - i) * inter_pulse_gap
@@ -227,16 +327,27 @@ class FrequencyWaveformBuilder:
                 ch2_raw[p_start:p_end] = self.counts_max
 
         # ---- 1 pulse DURING the analog pulse ----
-        during_start = pulse_start +  3  # start after T_delay from pulse start
+        during_start = pulse_start + 3
         during_end = min(during_start + digital_pulse_width, pulse_end)
         ch2_raw[during_start:during_end] = self.counts_max
         if during_start >= pulse_end:
             print(f"WARNING: during-pulse is outside analog pulse! during_start={during_start}, pulse_end={pulse_end}")
 
     def plot(self, frequency_config: dict) -> None:
-        """Open a matplotlib window showing ch0 (actinic), ch1 (analog flashes), and ch2 (detection markers)."""
-        import matplotlib.pyplot as plt
+        """Open a matplotlib window showing the three output channels.
 
+        Calls :meth:`build` with *frequency_config* and plots ch0 (actinic
+        sine), ch1 (analog flashes), and ch2 (detection markers) on a shared
+        time axis in milliseconds.  Pre- and post-detection dead zones are
+        shaded grey when ``"pre_detection"`` or ``"post_detection"`` keys are
+        present in *frequency_config*.
+
+        Args:
+            frequency_config: Dict passed directly to :meth:`build`.  Must
+                contain ``"frequency"`` (Hz).  Optionally ``"nbr_of_periods"``,
+                ``"pre_detection"``, and ``"post_detection"`` control the title
+                and grey shading.
+        """
         interleaved, total_samples, _ = self.build(frequency_config)
         ch0 = interleaved[0::3]
         ch1 = interleaved[1::3]
@@ -265,7 +376,6 @@ class FrequencyWaveformBuilder:
         axes[2].set_title("Ch2 — detection markers")
         axes[2].set_xlabel("Time (ms)")
 
-        # Shade pre/post periods in light grey so dead zones are obvious
         freq = float(frequency_config["frequency"])
         pre_periods = int(frequency_config.get("pre_detection", 0))
         post_periods = int(frequency_config.get("post_detection", 0))
