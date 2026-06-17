@@ -31,10 +31,10 @@ if __name__ == '__main__' :
 
     dpg.show_viewport()
 
-    from hardware.adc_base import ADCBase
+    from hardware.adc_sequence import SequenceAcquisitionADC
     from hardware.esp32 import Esp32Base
 
-    adc_instance = ADCBase()
+    adc_instance = SequenceAcquisitionADC()
     esp32_instance = Esp32Base()
 
     from core.app_state import AppState
