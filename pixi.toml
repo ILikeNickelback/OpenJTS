@@ -6,6 +6,7 @@ platforms = ["win-64"]
 version = "0.1.0"
 
 [tasks]
+test = "pytest software/tests"
 
 [dependencies]
 python = "3.14.*"
@@ -16,3 +17,4 @@ ruff = ">=0.15.17,<0.16"
 loguru = ">=0.7.3,<0.8"
 mcculw = ">=1.0.0,<2"
 matplotlib = ">=3.11.0,<4"
+pyserial = ">=3.5,<4"

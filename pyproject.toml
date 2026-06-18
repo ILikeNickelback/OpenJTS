@@ -11,3 +11,12 @@ OpenJTS = { path = ".", editable = true }
 
 [tool.ruff.lint]
 ignore = ["E701"]
+
+[tool.pytest.ini_options]
+pythonpath = ["software/src"]
+testpaths = ["software/tests"]
+markers = [
+    "unit: fast, fully isolated tests with no hardware or GUI dependencies",
+    "integration: tests that wire real components together with the hardware boundary faked (serial, ADC)",
+    "system: full app/hardware smoke tests; not run automatically (see software/tests/README.md)",
+]
