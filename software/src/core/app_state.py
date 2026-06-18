@@ -1,4 +1,5 @@
-#TODO: Consider using prorperty decorators for getters and setters in AppState class to improve encapsulation and maintainability.
+# TODO: Consider using prorperty decorators for getters and setters in AppState class to improve encapsulation and maintainability.
+
 
 class AppState:
     """Shared application state container for the JTS data acquisition system.
@@ -7,11 +8,12 @@ class AppState:
     sequence data, and acquisition parameters. Acts as a central store passed
     between UI and hardware layers.
     """
+
     def __init__(self):
         self.sequenced_dict = {}
         self.sequence_list = {}
         self.frequency_config = {}
-        self.experiment_type = None 
+        self.experiment_type = None
 
         self.experiment_metadata = {}
         self.UUID_sequence_input_list = {}
@@ -29,11 +31,11 @@ class AppState:
 
         # Global/default parameter config (fallback when no per-sequence params set)
         self.parameter_config = {
-            "baseline_points":          0,
-            "nbr_of_averages":          1,
+            "baseline_points": 0,
+            "nbr_of_averages": 1,
             "time_between_averages_ms": 0,
-            "nbr_sequences_ignored":    0,
-            "time_before_next_seq_ms":  0,
+            "nbr_sequences_ignored": 0,
+            "time_before_next_seq_ms": 0,
         }
 
         self.total_time = None
@@ -88,7 +90,9 @@ class AppState:
         """
         return self.UUID_sequence_input_list
 
-    def add_experiment(self, name: str, acquisition_type: str, experiment_type: str) -> None:
+    def add_experiment(
+        self, name: str, acquisition_type: str, experiment_type: str
+    ) -> None:
         """Append a new experiment entry to the experiment list.
 
         Args:
@@ -96,12 +100,18 @@ class AppState:
             acquisition_type: Acquisition mode, either ``"Sequence"`` or ``"Frequency"``.
             experiment_type: Category or protocol type of the experiment.
         """
-        self.experiments.append({
-            "name": name,
-            "acquisition_type": acquisition_type,
-            "experiment_type": experiment_type,
-            "operator": "", "project": "", "sample_id": "", "date": "", "comments": "",
-        })
+        self.experiments.append(
+            {
+                "name": name,
+                "acquisition_type": acquisition_type,
+                "experiment_type": experiment_type,
+                "operator": "",
+                "project": "",
+                "sample_id": "",
+                "date": "",
+                "comments": "",
+            }
+        )
 
     def update_experiment_metadata(self, name: str, key: str, value: str) -> None:
         """Update a single metadata field for the experiment with the given name.
@@ -149,7 +159,9 @@ class AppState:
     @acquisition_type.setter
     def acquisition_type(self, value: str) -> None:
         if value not in {"Sequence", "Frequency"}:
-            raise ValueError(f"acquisition_type must be 'Sequence' or 'Frequency', got {value!r}")
+            raise ValueError(
+                f"acquisition_type must be 'Sequence' or 'Frequency', got {value!r}"
+            )
         self._acquisition_type = value
 
     def set_adc_instance(self, adc_instance) -> None:

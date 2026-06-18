@@ -25,17 +25,25 @@ class JsonFileManager:
         Must be called inside an active DearPyGui context before calling
         `save()` or `load()`.
         """
-        with dpg.file_dialog(directory_selector=False, show=False,
-                             callback=self._save_callback,
-                             tag=f"save_dialog_{self.uuid}",
-                             width=700, height=400):
+        with dpg.file_dialog(
+            directory_selector=False,
+            show=False,
+            callback=self._save_callback,
+            tag=f"save_dialog_{self.uuid}",
+            width=700,
+            height=400,
+        ):
             dpg.add_file_extension(".json", color=(150, 255, 150, 255))
             dpg.add_file_extension(".*")
 
-        with dpg.file_dialog(directory_selector=False, show=False,
-                             callback=self._load_callback,
-                             tag=f"load_dialog_{self.uuid}",
-                             width=700, height=400):
+        with dpg.file_dialog(
+            directory_selector=False,
+            show=False,
+            callback=self._load_callback,
+            tag=f"load_dialog_{self.uuid}",
+            width=700,
+            height=400,
+        ):
             dpg.add_file_extension(".json", color=(150, 255, 150, 255))
             dpg.add_file_extension(".*")
 
@@ -59,8 +67,8 @@ class JsonFileManager:
             sender: DearPyGui item that triggered the callback (unused).
             app_data (dict): Dialog result containing 'file_path_name'.
         """
-        path = app_data['file_path_name']
-        with open(path, 'w', encoding='utf-8') as f:
+        path = app_data["file_path_name"]
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self._save_data, f, indent=4)
 
     def _load_callback(self, app_data):
@@ -70,8 +78,8 @@ class JsonFileManager:
             sender: DearPyGui item that triggered the callback (unused).
             app_data (dict): Dialog result containing 'file_path_name'.
         """
-        path = app_data['file_path_name']
-        with open(path, 'r', encoding='utf-8') as f:
+        path = app_data["file_path_name"]
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         if self.on_load_complete:
             self.on_load_complete(data)

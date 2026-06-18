@@ -64,7 +64,9 @@ class FrequencyWaveformBuilder:
         self.board_num = board_num
         self.rate = rate
         self.dev_info = DaqDeviceInfo(self.board_num)
-        self.points_before_flash = config["Sampling"].get("number_of_points_before_flash", 1)
+        self.points_before_flash = config["Sampling"].get(
+            "number_of_points_before_flash", 1
+        )
         self.counts_max = 65535
         self.dark_window = 120
         self.actinic_light_offset = config["LED"]["actinic_light_offset"]
@@ -128,17 +130,26 @@ class FrequencyWaveformBuilder:
         total_samples = samples_per_period * total_periods
         pulse_width_samples = int(self.rate * 20e-6)  # 20 µs
 
-        normal_pulses = frequency_config.get("normal_pulses_per_period", config["Sampling"].get("normal_pulses_per_period", 10))
+        normal_pulses = frequency_config.get(
+            "normal_pulses_per_period",
+            config["Sampling"].get("normal_pulses_per_period", 10),
+        )
 
         # ---- Precompute saturating-pulse windows and the flash pulses inside them ----
         saturating_overrides = []
         if saturating_pulse_data:
             override_pulses = config["Sampling"].get("override_pulses", 4)
             for p in saturating_pulse_data.values():
-                start = int((p["period_number"] + p["degree"] / 360) * samples_per_period)
+                start = int(
+                    (p["period_number"] + p["degree"] / 360) * samples_per_period
+                )
                 end = int(start + p["duration_ms"] * self.rate / 1000)
-                pulse_positions = np.linspace(2, end - start - 2, override_pulses, endpoint=False, dtype=int)
-                saturating_overrides.append({"start": start, "end": end, "pulse_positions": pulse_positions})
+                pulse_positions = np.linspace(
+                    2, end - start - 2, override_pulses, endpoint=False, dtype=int
+                )
+                saturating_overrides.append(
+                    {"start": start, "end": end, "pulse_positions": pulse_positions}
+                )
 
         # Pre-allocate interleaved array and create views for each channel
         interleaved = np.empty(total_samples * 3, dtype=np.uint16)
@@ -153,7 +164,9 @@ class FrequencyWaveformBuilder:
 
         # Phase so the sine starts at background_light_data intensity
         if amplitude != 0:
-            bg_norm = np.clip((background_light_data - offset_val) / amplitude, -1.0, 1.0)
+            bg_norm = np.clip(
+                (background_light_data - offset_val) / amplitude, -1.0, 1.0
+            )
             phase = np.arcsin(bg_norm)
         else:
             phase = 0
@@ -161,14 +174,19 @@ class FrequencyWaveformBuilder:
         sine = amplitude * np.sin(2 * np.pi * freq * t + phase) + offset_val
 
         counts_max = 65535
-        ch0_volts = counts_max * (0.5 + 0.5 * sine / 100) - self.actinic_light_offset  # convert to counts
+        ch0_volts = (
+            counts_max * (0.5 + 0.5 * sine / 100) - self.actinic_light_offset
+        )  # convert to counts
 
-        background_light_data = counts_max * (0.5 + 0.5 * background_light_data / 100) - self.actinic_light_offset
+        background_light_data = (
+            counts_max * (0.5 + 0.5 * background_light_data / 100)
+            - self.actinic_light_offset
+        )
         # Zero out pre/post periods
         if pre_periods > 0:
-            ch0_volts[:pre_periods * samples_per_period] = background_light_data
+            ch0_volts[: pre_periods * samples_per_period] = background_light_data
         if post_periods > 0:
-            ch0_volts[-post_periods * samples_per_period:] = background_light_data
+            ch0_volts[-post_periods * samples_per_period :] = background_light_data
 
         # Apply override pulses on ch0
         for ov in saturating_overrides:
@@ -177,7 +195,9 @@ class FrequencyWaveformBuilder:
             # Saturating light off during the analog/digital flash pulses
             for offset in ov["pulse_positions"]:
                 pulse_start = start + offset - self.dark_window
-                pulse_end = min(pulse_start + pulse_width_samples, end) + self.dark_window
+                pulse_end = (
+                    min(pulse_start + pulse_width_samples, end) + self.dark_window
+                )
                 ch0_volts[pulse_start:pulse_end] = 0
 
         ch0_raw[:] = ch0_volts
@@ -186,17 +206,21 @@ class FrequencyWaveformBuilder:
         # Anchor the grid to (sine_start + min_start_samples) so no pulse straddles
         # the pre-period / sine-wave boundary, then extend the same grid backward
         # into the pre-period and forward into the post-period.
-        min_start_samples = int(self.rate * 100e-6)   # 100 µs offset from sine start
+        min_start_samples = int(self.rate * 100e-6)  # 100 µs offset from sine start
 
         sine_start = pre_periods * samples_per_period
-        spacing = samples_per_period / normal_pulses   # uniform inter-pulse gap (samples)
+        spacing = (
+            samples_per_period / normal_pulses
+        )  # uniform inter-pulse gap (samples)
         first_sine_pulse = sine_start + min_start_samples
 
         # Step the grid back so it covers the pre-period too
         n_back = int(np.floor(first_sine_pulse / spacing))
         grid_start = first_sine_pulse - n_back * spacing
         all_positions = np.arange(grid_start, total_samples, spacing).astype(int)
-        all_positions = all_positions[(all_positions >= 0) & (all_positions < total_samples)]
+        all_positions = all_positions[
+            (all_positions >= 0) & (all_positions < total_samples)
+        ]
 
         # ---- Channel 1: Analog pulses ----
         pulse_counts = counts_max
@@ -212,7 +236,9 @@ class FrequencyWaveformBuilder:
         for ov in saturating_overrides:
             start, end = ov["start"], ov["end"]
             pulse_positions = ov["pulse_positions"]
-            cleared_normals = int(np.count_nonzero(ch1_raw[start:end] > 0) / pulse_width_samples)
+            cleared_normals = int(
+                np.count_nonzero(ch1_raw[start:end] > 0) / pulse_width_samples
+            )
             ch1_raw[start:end] = 0
 
             for offset in pulse_positions:
@@ -240,9 +266,7 @@ class FrequencyWaveformBuilder:
                 continue
             pulse_end = min(pos + pulse_width_samples, total_samples)
             self.write_pulse_markers(
-                ch2_raw, pos, pulse_end,
-                digital_pulse_width,
-                self.rate
+                ch2_raw, pos, pulse_end, digital_pulse_width, self.rate
             )
 
         # Override periods (ch2)
@@ -251,13 +275,13 @@ class FrequencyWaveformBuilder:
             ch2_raw[start:end] = 0
 
             pulse_positions = ov["pulse_positions"]
-            for offset in pulse_positions[1:]:  # ignore the first point of the saturating pulse
+            for offset in pulse_positions[
+                1:
+            ]:  # ignore the first point of the saturating pulse
                 pulse_start = start + offset
                 pulse_end = min(pulse_start + pulse_width_samples, end)
                 self.write_pulse_markers(
-                    ch2_raw, pulse_start, pulse_end,
-                    digital_pulse_width,
-                    self.rate
+                    ch2_raw, pulse_start, pulse_end, digital_pulse_width, self.rate
                 )
 
         # Collect actual flash-event sample positions for the time axis.
@@ -316,7 +340,7 @@ class FrequencyWaveformBuilder:
                 (typically 10 µs × rate).
             rate: Output sample rate in Hz, used to compute ``inter_pulse_gap``.
         """
-        inter_pulse_gap = int(rate * 5 * 10e-6)   # 50 µs spacing between pulses
+        inter_pulse_gap = int(rate * 5 * 10e-6)  # 50 µs spacing between pulses
 
         # ---- points_before_flash pre-pulses BEFORE the analog pulse ----
         # Last pre-pulse ends flush at pulse_start; earlier ones step back by inter_pulse_gap
@@ -331,7 +355,9 @@ class FrequencyWaveformBuilder:
         during_end = min(during_start + digital_pulse_width, pulse_end)
         ch2_raw[during_start:during_end] = self.counts_max
         if during_start >= pulse_end:
-            print(f"WARNING: during-pulse is outside analog pulse! during_start={during_start}, pulse_end={pulse_end}")
+            print(
+                f"WARNING: during-pulse is outside analog pulse! during_start={during_start}, pulse_end={pulse_end}"
+            )
 
     def plot(self, frequency_config: dict) -> None:
         """Open a matplotlib window showing the three output channels.
@@ -359,7 +385,7 @@ class FrequencyWaveformBuilder:
         fig.suptitle(
             f"Waveform preview  —  {frequency_config.get('frequency', '?')} Hz  "
             f"|  {frequency_config.get('nbr_of_periods', '?')} periods  "
-            f"|  rate {self.rate/1e3:.0f} kHz",
+            f"|  rate {self.rate / 1e3:.0f} kHz",
             fontsize=11,
         )
 
@@ -381,12 +407,16 @@ class FrequencyWaveformBuilder:
         post_periods = int(frequency_config.get("post_detection", 0))
         samples_per_period = int(self.rate / freq)
         pre_end_ms = pre_periods * samples_per_period / self.rate * 1000
-        post_start_ms = (total_samples - post_periods * samples_per_period) / self.rate * 1000
+        post_start_ms = (
+            (total_samples - post_periods * samples_per_period) / self.rate * 1000
+        )
         for ax in axes:
             if pre_periods > 0:
                 ax.axvspan(0, pre_end_ms, color="grey", alpha=0.15, label="pre")
             if post_periods > 0:
-                ax.axvspan(post_start_ms, t_ms[-1], color="grey", alpha=0.15, label="post")
+                ax.axvspan(
+                    post_start_ms, t_ms[-1], color="grey", alpha=0.15, label="post"
+                )
 
         fig.tight_layout()
         plt.show()

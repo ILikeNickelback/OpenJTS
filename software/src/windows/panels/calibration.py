@@ -17,8 +17,17 @@ class calibration_win(WindowBase):
     are forwarded to the running worker in real time.
     """
 
-    def __init__(self, label="Detection LED", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None):
+    def __init__(
+        self,
+        label="Detection LED",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -39,17 +48,16 @@ class calibration_win(WindowBase):
     # ------------------------------------------------------------------
     # Tag helper
     # ------------------------------------------------------------------
-    def _t(self, name): return f"cal_{name}_{self.UUID}"
+    def _t(self, name):
+        return f"cal_{name}_{self.UUID}"
 
     # ------------------------------------------------------------------
     # UI
     # ------------------------------------------------------------------
     def _build_ui(self):
-        with dpg.child_window(tag=self.winID,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos):
-
+        with dpg.child_window(
+            tag=self.winID, width=self.width, height=self.height, pos=self.pos
+        ):
             dpg.add_text("Detection LED")
             dpg.add_separator()
             dpg.add_spacer(height=6)
@@ -64,8 +72,11 @@ class calibration_win(WindowBase):
                     dpg.add_text("Intensity")
                     dpg.add_slider_int(
                         tag=self._t("slider"),
-                        default_value=100, min_value=0, max_value=100,
-                        width=-1, callback=self._on_slider,
+                        default_value=100,
+                        min_value=0,
+                        max_value=100,
+                        width=-1,
+                        callback=self._on_slider,
                         format="%d",
                     )
                     dpg.add_text("%")
@@ -74,9 +85,14 @@ class calibration_win(WindowBase):
                     dpg.add_text("Fine adjust")
                     dpg.add_input_float(
                         tag=self._t("input"),
-                        default_value=100.0, min_value=0.0, max_value=100.0,
-                        min_clamped=True, max_clamped=True,
-                        step=0.1, width=-1, format="%.1f",
+                        default_value=100.0,
+                        min_value=0.0,
+                        max_value=100.0,
+                        min_clamped=True,
+                        max_clamped=True,
+                        step=0.1,
+                        width=-1,
+                        format="%.1f",
                         callback=self._on_input,
                     )
                     dpg.add_text("%")
@@ -92,16 +108,24 @@ class calibration_win(WindowBase):
                 callback=self._toggle_flash,
                 enabled=False,
             )
-            dpg.add_text("ADC not connected", tag=self._t("status"), color=(255, 80, 80))
+            dpg.add_text(
+                "ADC not connected", tag=self._t("status"), color=(255, 80, 80)
+            )
 
             # ── Live readout ─────────────────────────────────────────
 
-            with dpg.table(header_row=True,
-                           borders_outerH=True, borders_outerV=True,
-                           borders_innerH=True, borders_innerV=True,
-                           row_background=True):
-                dpg.add_table_column(label="Channel",   width_fixed=True, init_width_or_weight=110)
-                dpg.add_table_column(label="Value",     width_stretch=True)
+            with dpg.table(
+                header_row=True,
+                borders_outerH=True,
+                borders_outerV=True,
+                borders_innerH=True,
+                borders_innerV=True,
+                row_background=True,
+            ):
+                dpg.add_table_column(
+                    label="Channel", width_fixed=True, init_width_or_weight=110
+                )
+                dpg.add_table_column(label="Value", width_stretch=True)
 
                 with dpg.table_row():
                     dpg.add_text("Measurement")
@@ -129,10 +153,12 @@ class calibration_win(WindowBase):
 
     def _send_intensity(self, val: float):
         if self._flashing and self.worker_thread and self.worker_thread.is_alive():
-            self.worker_thread.send_command({
-                "action": "set_detection_intensity",
-                "intensity": val,
-            })
+            self.worker_thread.send_command(
+                {
+                    "action": "set_detection_intensity",
+                    "intensity": val,
+                }
+            )
 
         if self.bus:
             self.bus.publish("detection_led_changed", intensity=val)
@@ -142,7 +168,9 @@ class calibration_win(WindowBase):
     # ------------------------------------------------------------------
     def _refresh_adc_status(self):
         adc = self.state.get_adc_instance() if self.state else None
-        connected = adc is not None and (adc.is_connected() if hasattr(adc, "is_connected") else True)
+        connected = adc is not None and (
+            adc.is_connected() if hasattr(adc, "is_connected") else True
+        )
         dpg.configure_item(self._t("toggle"), enabled=connected)
         if not self._flashing:
             if connected:
@@ -173,17 +201,19 @@ class calibration_win(WindowBase):
             self.worker_thread.send_command({"action": "shutdown"})
             self.worker_thread.join(timeout=1.0)
 
-        adc   = self.state.get_adc_instance()  if self.state else None
+        adc = self.state.get_adc_instance() if self.state else None
         esp32 = self.state.get_esp32_instance() if self.state else None
         self.worker_thread = CalibrationAcquisitionWorker(adc, esp32)
         self.worker_thread.start()
         time.sleep(0.2)
 
-        self.worker_thread.send_command({
-            "action": "configure_calibration",
-            "sequence": ['#'],
-            "intensity": dpg.get_value(self._t("input")),
-        })
+        self.worker_thread.send_command(
+            {
+                "action": "configure_calibration",
+                "sequence": ["#"],
+                "intensity": dpg.get_value(self._t("input")),
+            }
+        )
         self.worker_thread.send_command({"action": "start_calibration"})
         time.sleep(0.1)
 
@@ -199,10 +229,12 @@ class calibration_win(WindowBase):
 
     def _stop_flash(self):
         if self.worker_thread and self.worker_thread.is_alive():
-            self.worker_thread.send_command({
-                "action": "configure_calibration",
-                "sequence": ['@'],
-            })
+            self.worker_thread.send_command(
+                {
+                    "action": "configure_calibration",
+                    "sequence": ["@"],
+                }
+            )
             self.worker_thread.send_command({"action": "stop_calibration"})
             time.sleep(0.2)
             self.worker_thread.send_command({"action": "shutdown"})
@@ -216,7 +248,7 @@ class calibration_win(WindowBase):
         dpg.set_item_label(self._t("toggle"), "Start flash  (1 Hz)")
         dpg.set_value(self._t("status"), "Ready")
         dpg.configure_item(self._t("status"), color=(180, 180, 180))
-        dpg.set_value(self._t("di"),  "—")
+        dpg.set_value(self._t("di"), "—")
         dpg.set_value(self._t("ref"), "—")
 
     # ------------------------------------------------------------------
@@ -236,9 +268,9 @@ class calibration_win(WindowBase):
             while True:
                 msg = self.worker_thread.result_queue.get_nowait()
                 if msg["type"] == "live":
-                    di  = msg.get("di",  0)
+                    di = msg.get("di", 0)
                     ref = msg.get("ref", 0)
-                    dpg.set_value(self._t("di"),  f"{di:.4f}")
+                    dpg.set_value(self._t("di"), f"{di:.4f}")
                     dpg.set_value(self._t("ref"), f"{ref:.4f}")
         except Exception:
             pass

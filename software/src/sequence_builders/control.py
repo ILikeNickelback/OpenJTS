@@ -17,7 +17,7 @@ class sequence_control:
         pass
 
     def count_nbr_of_points(self, sequence):
-        nbr_of_points = sequence.count('D')
+        nbr_of_points = sequence.count("D")
         return nbr_of_points
 
     def decode_sequence(self, sequence):

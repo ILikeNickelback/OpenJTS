@@ -19,8 +19,17 @@ class Frequency_input_window(WindowBase):
     are validated and stored in app_state when "Load sequences" is pressed.
     """
 
-    def __init__(self, label="Frequency Settings", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None):
+    def __init__(
+        self,
+        label="Frequency Settings",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -31,36 +40,39 @@ class Frequency_input_window(WindowBase):
 
         # Ever-increasing counter so deleted slot tags never collide with new ones.
         self._freq_counter = 0
-        self._active_ns = []          # ordered list of active slot n-values
-        self._sat_windows = {}        # n -> SaturatingPulseWindow
+        self._active_ns = []  # ordered list of active slot n-values
+        self._sat_windows = {}  # n -> SaturatingPulseWindow
 
         self._buildui()
 
         if bus:
             bus.subscribe("add_frequency_from_library", self._on_add_from_library)
-            bus.subscribe("load_frequency_configs",     self._load_all)
+            bus.subscribe("load_frequency_configs", self._load_all)
 
     # ------------------------------------------------------------------
     # Tag helpers
     # ------------------------------------------------------------------
-    def _t(self, name):        return f"freq_{name}_{self.UUID}"
-    def _st(self, n, name):    return f"freq_{self.UUID}_{n}_{name}"
+    def _t(self, name):
+        return f"freq_{name}_{self.UUID}"
+
+    def _st(self, n, name):
+        return f"freq_{self.UUID}_{n}_{name}"
 
     # ------------------------------------------------------------------
     # UI
     # ------------------------------------------------------------------
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Frequency acquisition")
             dpg.add_separator()
             dpg.add_spacer(height=6)
-
 
             dpg.add_text("", tag=self._t("status"), color=(255, 100, 100))
             dpg.add_separator()
@@ -68,10 +80,9 @@ class Frequency_input_window(WindowBase):
 
             # Scrollable slot area
             self._slot_container = self._t("slots")
-            with dpg.child_window(tag=self._slot_container,
-                                  autosize_x=True,
-                                  height=-1,
-                                  border=False):
+            with dpg.child_window(
+                tag=self._slot_container, autosize_x=True, height=-1, border=False
+            ):
                 self.add_slot()
 
     # ------------------------------------------------------------------
@@ -83,13 +94,16 @@ class Frequency_input_window(WindowBase):
         self._active_ns.append(n)
         parent = self._slot_container
 
-        dpg.add_text(f"Config {len(self._active_ns)}",
-                     tag=self._st(n, "label"),
-                     parent=parent)
+        dpg.add_text(
+            f"Config {len(self._active_ns)}", tag=self._st(n, "label"), parent=parent
+        )
 
-        with dpg.table(header_row=False, borders_innerV=False,
-                       tag=self._st(n, "table"),
-                       parent=parent):
+        with dpg.table(
+            header_row=False,
+            borders_innerV=False,
+            tag=self._st(n, "table"),
+            parent=parent,
+        ):
             dpg.add_table_column(width_fixed=True, init_width_or_weight=130)
             dpg.add_table_column(width_fixed=True, init_width_or_weight=100)
             dpg.add_table_column(width_fixed=True, init_width_or_weight=30)
@@ -99,34 +113,32 @@ class Frequency_input_window(WindowBase):
                 dpg.add_text("Wave", color=(150, 200, 255))
                 dpg.add_spacer()
                 dpg.add_spacer()
-            self._param_row(n, "Frequency",  "freq",   "float", 60.0, "Hz")
-            self._param_row(n, "Amplitude",  "amp",    "float", 50.0, "%")
-            self._param_row(n, "Offset",     "offset", "float", 50.0, "%")
+            self._param_row(n, "Frequency", "freq", "float", 60.0, "Hz")
+            self._param_row(n, "Amplitude", "amp", "float", 50.0, "%")
+            self._param_row(n, "Offset", "offset", "float", 50.0, "%")
 
             # Detection window
             with dpg.table_row():
                 dpg.add_text("Detection", color=(150, 200, 255))
                 dpg.add_spacer()
                 dpg.add_spacer()
-            self._param_row(n, "Periods",  "periods", "int", 10, "")
-            self._param_row(n, "Pre",      "pre",     "int",  0, "periods")
-            self._param_row(n, "Post",     "post",    "int",  0, "periods")
+            self._param_row(n, "Periods", "periods", "int", 10, "")
+            self._param_row(n, "Pre", "pre", "int", 0, "periods")
+            self._param_row(n, "Post", "post", "int", 0, "periods")
 
-        with dpg.group(horizontal=True,
-                       tag=self._st(n, "btn_group"),
-                       parent=parent):
-            dpg.add_button(label="+ Add",    callback=self.add_slot)
-            dpg.add_button(label="Delete",   callback=self._delete_cb,    user_data=n)
-            dpg.add_button(label="Visualize",callback=self._visualize_cb, user_data=n)
-            dpg.add_button(label="Sat. pulse",
-                           callback=self._open_sat_cb, user_data=n)
+        with dpg.group(horizontal=True, tag=self._st(n, "btn_group"), parent=parent):
+            dpg.add_button(label="+ Add", callback=self.add_slot)
+            dpg.add_button(label="Delete", callback=self._delete_cb, user_data=n)
+            dpg.add_button(label="Visualize", callback=self._visualize_cb, user_data=n)
+            dpg.add_button(label="Sat. pulse", callback=self._open_sat_cb, user_data=n)
 
         dpg.add_separator(tag=self._st(n, "sep"), parent=parent)
 
         # Create the floating saturating-pulse window for this slot (hidden until opened)
         sat = SaturatingPulseWindow(
             label=f"Saturating pulse — Config {len(self._active_ns)}",
-            win_width=620, win_height=300,
+            win_width=620,
+            win_height=300,
             pos=(200, 200),
             visible=False,
         )
@@ -139,25 +151,45 @@ class Frequency_input_window(WindowBase):
         with dpg.table_row():
             dpg.add_text(label)
             if kind == "float":
-                dpg.add_input_float(tag=tag, default_value=default,
-                                    min_value=0.0, min_clamped=True,
-                                    step=0.0, width=-1, format="%.7f")
+                dpg.add_input_float(
+                    tag=tag,
+                    default_value=default,
+                    min_value=0.0,
+                    min_clamped=True,
+                    step=0.0,
+                    width=-1,
+                    format="%.7f",
+                )
             else:
-                dpg.add_input_int(tag=tag, default_value=default,
-                                  min_value=0, min_clamped=True,
-                                  step=1, width=-1)
+                dpg.add_input_int(
+                    tag=tag,
+                    default_value=default,
+                    min_value=0,
+                    min_clamped=True,
+                    step=1,
+                    width=-1,
+                )
             dpg.add_text(unit)
 
-    def _delete_cb(self, _, __, user_data):    self.delete_slot(user_data)
-    def _visualize_cb(self, _, __, user_data): self._visualize(user_data)
-    def _open_sat_cb(self, _, __, user_data):  self._open_sat(user_data)
+    def _delete_cb(self, _, __, user_data):
+        self.delete_slot(user_data)
+
+    def _visualize_cb(self, _, __, user_data):
+        self._visualize(user_data)
+
+    def _open_sat_cb(self, _, __, user_data):
+        self._open_sat(user_data)
 
     def delete_slot(self, n):
         if len(self._active_ns) <= 1 or n not in self._active_ns:
             return
         self._active_ns.remove(n)
-        for tag in [self._st(n, "label"), self._st(n, "table"),
-                    self._st(n, "btn_group"), self._st(n, "sep")]:
+        for tag in [
+            self._st(n, "label"),
+            self._st(n, "table"),
+            self._st(n, "btn_group"),
+            self._st(n, "sep"),
+        ]:
             if dpg.does_item_exist(tag):
                 dpg.delete_item(tag)
         sat = self._sat_windows.pop(n, None)
@@ -186,12 +218,18 @@ class Frequency_input_window(WindowBase):
         self.add_slot()
         n = self._active_ns[-1]
         cfg = frequency_config
-        if "frequency"      in cfg: dpg.set_value(self._st(n, "freq"),    cfg["frequency"])
-        if "amplitude"      in cfg: dpg.set_value(self._st(n, "amp"),     cfg["amplitude"])
-        if "offset"         in cfg: dpg.set_value(self._st(n, "offset"),  cfg["offset"])
-        if "nbr_of_periods" in cfg: dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
-        if "pre_detection"  in cfg: dpg.set_value(self._st(n, "pre"),     cfg["pre_detection"])
-        if "post_detection" in cfg: dpg.set_value(self._st(n, "post"),    cfg["post_detection"])
+        if "frequency" in cfg:
+            dpg.set_value(self._st(n, "freq"), cfg["frequency"])
+        if "amplitude" in cfg:
+            dpg.set_value(self._st(n, "amp"), cfg["amplitude"])
+        if "offset" in cfg:
+            dpg.set_value(self._st(n, "offset"), cfg["offset"])
+        if "nbr_of_periods" in cfg:
+            dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
+        if "pre_detection" in cfg:
+            dpg.set_value(self._st(n, "pre"), cfg["pre_detection"])
+        if "post_detection" in cfg:
+            dpg.set_value(self._st(n, "post"), cfg["post_detection"])
 
     # ------------------------------------------------------------------
     # Read config for one slot
@@ -199,12 +237,12 @@ class Frequency_input_window(WindowBase):
     def _read_config(self, n) -> dict:
         sat = self._sat_windows.get(n)
         return {
-            "frequency":            dpg.get_value(self._st(n, "freq")),
-            "amplitude":            dpg.get_value(self._st(n, "amp")),
-            "offset":               dpg.get_value(self._st(n, "offset")),
-            "nbr_of_periods":       dpg.get_value(self._st(n, "periods")),
-            "pre_detection":        dpg.get_value(self._st(n, "pre")),
-            "post_detection":       dpg.get_value(self._st(n, "post")),
+            "frequency": dpg.get_value(self._st(n, "freq")),
+            "amplitude": dpg.get_value(self._st(n, "amp")),
+            "offset": dpg.get_value(self._st(n, "offset")),
+            "nbr_of_periods": dpg.get_value(self._st(n, "periods")),
+            "pre_detection": dpg.get_value(self._st(n, "pre")),
+            "post_detection": dpg.get_value(self._st(n, "post")),
             "saturating_pulse_data": sat.saturating_pulse_data if sat else {},
         }
 
@@ -222,30 +260,29 @@ class Frequency_input_window(WindowBase):
         self._set_status("")
 
     def _build_preview(self, cfg) -> dict:
-        freq   = cfg["frequency"]        # Hz
-        amp    = cfg["amplitude"]        # %
-        offset = cfg["offset"]           # %
-        n_det  = cfg["nbr_of_periods"]
-        pre    = cfg["pre_detection"]
-        post   = cfg["post_detection"]
+        freq = cfg["frequency"]  # Hz
+        amp = cfg["amplitude"]  # %
+        offset = cfg["offset"]  # %
+        n_det = cfg["nbr_of_periods"]
+        pre = cfg["pre_detection"]
+        post = cfg["post_detection"]
 
         total_periods = pre + n_det + post
         if freq <= 0 or total_periods <= 0:
             return {"time_ms": [], "actinic": [], "pulses": []}
 
-        period_ms    = 1000.0 / freq
-        total_ms     = total_periods * period_ms
-        n_pts        = max(int(total_periods * 80), 3)
+        period_ms = 1000.0 / freq
+        total_ms = total_periods * period_ms
+        n_pts = max(int(total_periods * 80), 3)
         det_start_ms = pre * period_ms
-        det_end_ms   = (pre + n_det) * period_ms
+        det_end_ms = (pre + n_det) * period_ms
 
         time_ms = []
         actinic = []
-        pulses  = []
+        pulses = []
         for i in range(n_pts):
             t = i * total_ms / (n_pts - 1)
-            sine_val = offset + (amp / 2.0) * math.sin(
-                2 * math.pi * freq * t / 1000.0)
+            sine_val = offset + (amp / 2.0) * math.sin(2 * math.pi * freq * t / 1000.0)
             time_ms.append(t)
             actinic.append(max(0.0, min(100.0, sine_val)))
             pulses.append(100.0 if det_start_ms <= t <= det_end_ms else 0.0)
@@ -270,18 +307,30 @@ class Frequency_input_window(WindowBase):
                 continue
 
             sequence = [
-                'F', 'T', str(cfg["frequency"]),      '^',
-                'N',      str(cfg["nbr_of_periods"]),  '^ ',
-                'A',      str(cfg["amplitude"]),       '^',
-                'O',      str(cfg["offset"]),          '^',
-                'P',      str(cfg["pre_detection"]),   '^',
-                'D',      str(cfg["post_detection"]),  '^',
+                "F",
+                "T",
+                str(cfg["frequency"]),
+                "^",
+                "N",
+                str(cfg["nbr_of_periods"]),
+                "^ ",
+                "A",
+                str(cfg["amplitude"]),
+                "^",
+                "O",
+                str(cfg["offset"]),
+                "^",
+                "P",
+                str(cfg["pre_detection"]),
+                "^",
+                "D",
+                str(cfg["post_detection"]),
+                "^",
             ]
             # Store as 4-tuple: (token_list, nbr_of_points, slot_index, freq_cfg)
             # acquisition._run_current_sequence reads seq[3] as the per-slot config
             if self.state:
-                self.state.set_decoded_sequence_list(
-                    (sequence, 0, idx, cfg), idx)
+                self.state.set_decoded_sequence_list((sequence, 0, idx, cfg), idx)
 
         if errors:
             self._set_status(" | ".join(errors))
@@ -290,13 +339,12 @@ class Frequency_input_window(WindowBase):
         if self.bus:
             # Publish the first config so Acquisition_win has a fallback
             first_cfg = self._read_config(self._active_ns[0])
-            self.bus.publish("frequency_config_changed",
-                             frequency_config=first_cfg)
+            self.bus.publish("frequency_config_changed", frequency_config=first_cfg)
             self.bus.publish("sequence_list_ready")
 
         self._set_status(
-            f"{len(self._active_ns)} config(s) ready.",
-            color=(100, 220, 100))
+            f"{len(self._active_ns)} config(s) ready.", color=(100, 220, 100)
+        )
 
     # ------------------------------------------------------------------
     # Status helper
@@ -326,12 +374,18 @@ class Frequency_input_window(WindowBase):
             if i > 0:
                 self.add_slot()
             n = self._active_ns[i]
-            if "frequency"      in cfg: dpg.set_value(self._st(n, "freq"),    cfg["frequency"])
-            if "amplitude"      in cfg: dpg.set_value(self._st(n, "amp"),     cfg["amplitude"])
-            if "offset"         in cfg: dpg.set_value(self._st(n, "offset"),  cfg["offset"])
-            if "nbr_of_periods" in cfg: dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
-            if "pre_detection"  in cfg: dpg.set_value(self._st(n, "pre"),     cfg["pre_detection"])
-            if "post_detection" in cfg: dpg.set_value(self._st(n, "post"),    cfg["post_detection"])
+            if "frequency" in cfg:
+                dpg.set_value(self._st(n, "freq"), cfg["frequency"])
+            if "amplitude" in cfg:
+                dpg.set_value(self._st(n, "amp"), cfg["amplitude"])
+            if "offset" in cfg:
+                dpg.set_value(self._st(n, "offset"), cfg["offset"])
+            if "nbr_of_periods" in cfg:
+                dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
+            if "pre_detection" in cfg:
+                dpg.set_value(self._st(n, "pre"), cfg["pre_detection"])
+            if "post_detection" in cfg:
+                dpg.set_value(self._st(n, "post"), cfg["post_detection"])
             sat = self._sat_windows.get(n)
             if sat and "saturating_pulse_data" in cfg:
                 sat.saturating_pulse_data = cfg["saturating_pulse_data"]
@@ -342,13 +396,16 @@ class Frequency_input_window(WindowBase):
     def _save_to_file(self):
         dpg.add_file_dialog(
             label="Save frequency config",
-            modal=True, width=700, height=450,
+            modal=True,
+            width=700,
+            height=450,
             callback=self._on_save_path,
         )
 
     def _on_save_path(self, sender, app_data, user_data):
-        path = (app_data.get("file_path_name", "") or
-                app_data.get("current_path", "")).strip()
+        path = (
+            app_data.get("file_path_name", "") or app_data.get("current_path", "")
+        ).strip()
         if not path:
             return
         p = Path(path)
@@ -365,15 +422,18 @@ class Frequency_input_window(WindowBase):
     def _load_from_file(self):
         tag = dpg.add_file_dialog(
             label="Load frequency config",
-            modal=True, width=700, height=450,
+            modal=True,
+            width=700,
+            height=450,
             callback=self._on_load_file,
         )
         dpg.add_file_extension(".json", parent=tag, color=(100, 220, 100, 255))
 
     def _on_load_file(self, sender, app_data, user_data):
         selections = app_data.get("selections", {})
-        path = (next(iter(selections.values()), "")
-                or app_data.get("file_path_name", "")).strip()
+        path = (
+            next(iter(selections.values()), "") or app_data.get("file_path_name", "")
+        ).strip()
         if not path:
             return
         try:
@@ -390,12 +450,18 @@ class Frequency_input_window(WindowBase):
                 if i > 0:
                     self.add_slot()
                 n = self._active_ns[i]
-                if "frequency"      in cfg: dpg.set_value(self._st(n, "freq"),    cfg["frequency"])       
-                if "amplitude"      in cfg: dpg.set_value(self._st(n, "amp"),     cfg["amplitude"])       
-                if "offset"         in cfg: dpg.set_value(self._st(n, "offset"),  cfg["offset"])          
-                if "nbr_of_periods" in cfg: dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])  
-                if "pre_detection"  in cfg: dpg.set_value(self._st(n, "pre"),     cfg["pre_detection"])   
-                if "post_detection" in cfg: dpg.set_value(self._st(n, "post"),    cfg["post_detection"])  
+                if "frequency" in cfg:
+                    dpg.set_value(self._st(n, "freq"), cfg["frequency"])
+                if "amplitude" in cfg:
+                    dpg.set_value(self._st(n, "amp"), cfg["amplitude"])
+                if "offset" in cfg:
+                    dpg.set_value(self._st(n, "offset"), cfg["offset"])
+                if "nbr_of_periods" in cfg:
+                    dpg.set_value(self._st(n, "periods"), cfg["nbr_of_periods"])
+                if "pre_detection" in cfg:
+                    dpg.set_value(self._st(n, "pre"), cfg["pre_detection"])
+                if "post_detection" in cfg:
+                    dpg.set_value(self._st(n, "post"), cfg["post_detection"])
 
             self._set_status("Loaded", color=(100, 220, 100))
         except Exception as e:

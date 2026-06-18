@@ -1,7 +1,8 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
 from core.window_base import WindowBase
- 
+
+
 class Lineplot_win(WindowBase):
     """
     Live and final results line plot panel.
@@ -15,9 +16,20 @@ class Lineplot_win(WindowBase):
     """
 
     LIVE_UUID = 999  # Constant to identify live data series
-    def __init__(self, label="Lineplot", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None,
-                 experiment_name=None, experiment_type=None):
+
+    def __init__(
+        self,
+        label="Lineplot",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+        experiment_name=None,
+        experiment_type=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -52,38 +64,50 @@ class Lineplot_win(WindowBase):
         self._build_ui()
 
         if bus:
-            bus.subscribe("live_data",           lambda y, x, **_: self.plot_data(x=x, y=y, UUID=self.LIVE_UUID))
-            bus.subscribe("final_data",          self._on_final_data)
-            bus.subscribe("intermediate_data",   self._on_intermediate_data)
-            bus.subscribe("clear_live",          lambda **_: self.clear_live_data())
-            bus.subscribe("clear_intermediates", lambda **_: self._clear_intermediate_series())
-            bus.subscribe("plot_cmd",            lambda cmd=None, **_: self._handle_cmd(cmd) if cmd else None)
-            bus.subscribe("serie_renamed",       self._on_serie_renamed)
+            bus.subscribe(
+                "live_data",
+                lambda y, x, **_: self.plot_data(x=x, y=y, UUID=self.LIVE_UUID),
+            )
+            bus.subscribe("final_data", self._on_final_data)
+            bus.subscribe("intermediate_data", self._on_intermediate_data)
+            bus.subscribe("clear_live", lambda **_: self.clear_live_data())
+            bus.subscribe(
+                "clear_intermediates", lambda **_: self._clear_intermediate_series()
+            )
+            bus.subscribe(
+                "plot_cmd", lambda cmd=None, **_: self._handle_cmd(cmd) if cmd else None
+            )
+            bus.subscribe("serie_renamed", self._on_serie_renamed)
 
     # --------------------------
     # UI BUILDING
     # --------------------------
     def _build_ui(self):
         self._container_tag = f"seq_container_{self.UUID}"
-        with dpg.child_window(tag=self._container_tag,
-                              label = "Lineplot",
-                              width=self.width,
-                            height=self.height,
-                            pos=self.pos,
-                        show=self.visible):
-
-            dpg.add_checkbox(label="Annotation",
-                             tag=self.annot_check_tag,
-                             default_value=True)
+        with dpg.child_window(
+            tag=self._container_tag,
+            label="Lineplot",
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            show=self.visible,
+        ):
+            dpg.add_checkbox(
+                label="Annotation", tag=self.annot_check_tag, default_value=True
+            )
 
             with dpg.plot(label="Line Series", height=-1, width=-1, tag=self.plot_tag):
                 dpg.add_plot_legend()
                 dpg.add_plot_axis(dpg.mvXAxis, label="Time (ms)", tag=self.xaxis_tag)
-                dpg.add_plot_axis(dpg.mvYAxis, label=self._y_axis_label(), tag=self.yaxis_tag)
-                dpg.add_drag_line(label="dline1",
-                                  tag=self.dragline_tag,
-                                  color=[255, 0, 0, 255],
-                                  callback=self.dragline_callback)
+                dpg.add_plot_axis(
+                    dpg.mvYAxis, label=self._y_axis_label(), tag=self.yaxis_tag
+                )
+                dpg.add_drag_line(
+                    label="dline1",
+                    tag=self.dragline_tag,
+                    color=[255, 0, 0, 255],
+                    callback=self.dragline_callback,
+                )
 
             with dpg.handler_registry():
                 dpg.add_mouse_move_handler(callback=self.plot_change_callback)
@@ -107,17 +131,18 @@ class Lineplot_win(WindowBase):
     def find_closest_point(self, mouse_x, mouse_y, x_data, y_data):
         x_scale = 1 / np.ptp(x_data + 1e-9)
         y_scale = 1 / np.ptp(y_data + 1e-9)
-        distances = np.hypot((x_data - mouse_x) * x_scale,
-                             (y_data - mouse_y) * y_scale)
+        distances = np.hypot((x_data - mouse_x) * x_scale, (y_data - mouse_y) * y_scale)
         return np.argmin(distances)
 
     def _get_active_series(self):
         """
         Return currently selected line series data or first series in plot.
         """
-        if (self.selected_series and
-                dpg.does_item_exist(self.selected_series) and
-                dpg.get_item_type(self.selected_series) == "mvAppItemType::mvLineSeries"):
+        if (
+            self.selected_series
+            and dpg.does_item_exist(self.selected_series)
+            and dpg.get_item_type(self.selected_series) == "mvAppItemType::mvLineSeries"
+        ):
             series_data = dpg.get_value(self.selected_series)
             # dpg.get_value returns (x, y, x2, y2, y3) for line series
             # We only need the first two elements
@@ -149,16 +174,19 @@ class Lineplot_win(WindowBase):
             return
 
         mouse_x, mouse_y = dpg.get_plot_mouse_pos()
-        index = self.find_closest_point(mouse_x, mouse_y,
-                                        np.array(xplot), np.array(yplot))
+        index = self.find_closest_point(
+            mouse_x, mouse_y, np.array(xplot), np.array(yplot)
+        )
 
         text = f"Index: {index}\nX: {xplot[index]}\nY: {yplot[index]}"
-        dpg.add_plot_annotation(tag=self.closest_point_annot_tag,
-                                label=text,
-                                default_value=(xplot[index], yplot[index]),
-                                offset=(25, -25),
-                                color=[255, 255, 0, 255],
-                                parent=self.plot_tag)
+        dpg.add_plot_annotation(
+            tag=self.closest_point_annot_tag,
+            label=text,
+            default_value=(xplot[index], yplot[index]),
+            offset=(25, -25),
+            color=[255, 255, 0, 255],
+            parent=self.plot_tag,
+        )
 
     def autofit_axis(self):
         dpg.fit_axis_data(self.xaxis_tag)
@@ -187,10 +215,13 @@ class Lineplot_win(WindowBase):
                 # FRESH START - clear old data
                 self.live_x = [x]
                 self.live_y = [y]
-                dpg.add_line_series(x=self.live_x, y=self.live_y,
-                                    label="Live",
-                                    tag=self.live_series_tag,
-                                    parent=self.yaxis_tag)
+                dpg.add_line_series(
+                    x=self.live_x,
+                    y=self.live_y,
+                    label="Live",
+                    tag=self.live_series_tag,
+                    parent=self.yaxis_tag,
+                )
             else:
                 if isinstance(x, list) or isinstance(y, list):
                     print("⚠ Live data must be scalar")
@@ -203,14 +234,15 @@ class Lineplot_win(WindowBase):
             self.autofit_axis()
             return
 
-        
         if x is None and y is not None:
             x = list(range(len(y)))
 
         series_id = f"prevplot_{UUID}"
         if not dpg.does_item_exist(series_id):
             # Create new series with COPIES of the data
-            dpg.add_line_series(x=list(x), y=list(y), label=name, tag=series_id, parent=self.yaxis_tag)
+            dpg.add_line_series(
+                x=list(x), y=list(y), label=name, tag=series_id, parent=self.yaxis_tag
+            )
         else:
             # Update existing series with COPIES of the data
             dpg.configure_item(series_id, x=list(x), y=list(y))
@@ -223,26 +255,35 @@ class Lineplot_win(WindowBase):
     # --------------------------
     def _get_sample_id(self) -> str:
         if self.state and self.experiment_name:
-            exp = next((e for e in self.state.get_experiments()
-                        if e["name"] == self.experiment_name), {})
+            exp = next(
+                (
+                    e
+                    for e in self.state.get_experiments()
+                    if e["name"] == self.experiment_name
+                ),
+                {},
+            )
             return exp.get("sample_id", "") or ""
         return ""
 
-    def _on_final_data(self, final_results, time_values, series_id=0, n_avg=1,
-                       sequence=None, **_):
+    def _on_final_data(
+        self, final_results, time_values, series_id=0, n_avg=1, sequence=None, **_
+    ):
         if time_values is None:
             time_values = list(range(len(final_results)))
         sample_id = self._get_sample_id()
         base = sample_id if sample_id else f"Result {series_id + 1}"
         label = f"{base} (avg×{n_avg})" if n_avg > 1 else base
         # Save for workspace persistence only — plotting is handled by sample_container
-        self._saved_results.append({
-            "time_values":   list(time_values),
-            "final_results": list(final_results),
-            "label":         label,
-            "series_id":     series_id,
-            "sequence":      sequence,
-        })
+        self._saved_results.append(
+            {
+                "time_values": list(time_values),
+                "final_results": list(final_results),
+                "label": label,
+                "series_id": series_id,
+                "sequence": sequence,
+            }
+        )
 
     def get_results(self) -> list:
         """Return all accumulated final results for workspace saving."""
@@ -296,10 +337,12 @@ class Lineplot_win(WindowBase):
         data = cmd.get("data", {})
 
         if action == "add serie":
-            self.plot_data(x=data.get("x"),
-                           y=data.get("y"),
-                           name=data.get("name"),
-                           UUID=data.get("uuid"))
+            self.plot_data(
+                x=data.get("x"),
+                y=data.get("y"),
+                name=data.get("name"),
+                UUID=data.get("uuid"),
+            )
         elif action == "remove serie":
             UUID = data.get("uuid")
             if UUID:

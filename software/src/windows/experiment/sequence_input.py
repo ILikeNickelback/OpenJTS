@@ -19,10 +19,17 @@ class Sequence_input_window(WindowBase):
     with app_state via _sync_state after every structural change.
     """
 
-    def __init__(self, label="Sequence input", pos=None, width=None, height=None,
-                 uuid=None, visible=True,
-                 state=None, bus=None):
-
+    def __init__(
+        self,
+        label="Sequence input",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -55,12 +62,14 @@ class Sequence_input_window(WindowBase):
 
     def _build_ui(self):
         self._container_tag = f"seq_container_{self.UUID}"
-        with dpg.child_window(tag=self._container_tag,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              border=True,
-                              show=self.visible):
+        with dpg.child_window(
+            tag=self._container_tag,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            border=True,
+            show=self.visible,
+        ):
             self.add_sequence()
 
     def add_sequence(self):
@@ -72,7 +81,9 @@ class Sequence_input_window(WindowBase):
 
         # Inherit parameters from the previous sequence
         if prev_n is not None and self.state:
-            prev_params = (getattr(self.state, "sequence_parameters", {}) or {}).get(prev_n)
+            prev_params = (getattr(self.state, "sequence_parameters", {}) or {}).get(
+                prev_n
+            )
             if prev_params is not None:
                 if not hasattr(self.state, "sequence_parameters"):
                     self.state.sequence_parameters = {}
@@ -82,13 +93,14 @@ class Sequence_input_window(WindowBase):
         display_idx = len(self._active_ns)
 
         # Header row: sequence label + Params + Visualize buttons
-        with dpg.group(horizontal=True,
-                       tag=f"seq_header_{self.UUID}_{n}",
-                       parent=parent):
-            dpg.add_text(f"Sequence {display_idx}",
-                         tag=f"seq_label_{self.UUID}_{n}",
-                         color=(180, 220, 255))
-
+        with dpg.group(
+            horizontal=True, tag=f"seq_header_{self.UUID}_{n}", parent=parent
+        ):
+            dpg.add_text(
+                f"Sequence {display_idx}",
+                tag=f"seq_label_{self.UUID}_{n}",
+                color=(180, 220, 255),
+            )
 
         # Full-width multiline input
         input_tag = f"seq_input_{self.UUID}_{n}"
@@ -107,9 +119,9 @@ class Sequence_input_window(WindowBase):
             dpg.bind_item_font(input_tag, font)
 
         # Management buttons
-        with dpg.group(horizontal=True,
-                       tag=f"seq_btn_group_{self.UUID}_{n}",
-                       parent=parent):
+        with dpg.group(
+            horizontal=True, tag=f"seq_btn_group_{self.UUID}_{n}", parent=parent
+        ):
             dpg.add_button(label="+ Add", callback=self.add_sequence)
             dpg.add_button(
                 label="Delete",
@@ -131,7 +143,6 @@ class Sequence_input_window(WindowBase):
 
         dpg.add_separator(tag=f"seq_sep_{self.UUID}_{n}", parent=parent)
 
-
         self._relabel_all()
         self._sync_state()
 
@@ -142,7 +153,7 @@ class Sequence_input_window(WindowBase):
         self._active_ns.remove(n)
 
         for tag in [
-            f"seq_header_{self.UUID}_{n}",    # group containing label + key buttons
+            f"seq_header_{self.UUID}_{n}",  # group containing label + key buttons
             f"seq_input_{self.UUID}_{n}",
             f"seq_btn_group_{self.UUID}_{n}",
             f"seq_sep_{self.UUID}_{n}",
@@ -161,7 +172,9 @@ class Sequence_input_window(WindowBase):
         """Publish event to open/focus the settings panel for sequence n."""
         display_idx = self._active_ns.index(n) + 1 if n in self._active_ns else n
         if self.bus:
-            self.bus.publish("open_sequence_settings", n=n, label=f"Sequence {display_idx}")
+            self.bus.publish(
+                "open_sequence_settings", n=n, label=f"Sequence {display_idx}"
+            )
 
     def _visualize(self, n: int):
         """Decode the sequence for row n, build a preview, and publish it on the bus."""
@@ -209,18 +222,20 @@ class Sequence_input_window(WindowBase):
             if not str_seq.strip():
                 continue
             decoded, nbr_of_points = self.sequence_control.decode_sequence(str_seq)
-            sequence_list.append({
-                "str_sequence": str_seq,
-                "decoded": decoded,
-                "nbr_of_points": nbr_of_points,
-            })
+            sequence_list.append(
+                {
+                    "str_sequence": str_seq,
+                    "decoded": decoded,
+                    "nbr_of_points": nbr_of_points,
+                }
+            )
 
         self.state.set_sequence_list(sequence_list)
         self.bus.publish("sequence_list_ready", count=len(sequence_list))
 
-        dpg.set_value(f"process_status_{self.UUID}",
-                      f"{len(sequence_list)} sequence(s) ready.")
-
+        dpg.set_value(
+            f"process_status_{self.UUID}", f"{len(sequence_list)} sequence(s) ready."
+        )
 
     # ----------------------------------------------------------
     # Save / Load
@@ -229,8 +244,7 @@ class Sequence_input_window(WindowBase):
     def get_sequence_strings(self) -> list:
         """Return the current text value of every active sequence input."""
         return [
-            dpg.get_value(f"seq_input_{self.UUID}_{n}") or ""
-            for n in self._active_ns
+            dpg.get_value(f"seq_input_{self.UUID}_{n}") or "" for n in self._active_ns
         ]
 
     def load_sequences(self, strings: list):

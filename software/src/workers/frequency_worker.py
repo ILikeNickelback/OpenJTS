@@ -33,7 +33,9 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         self._owns_adc = True
 
         frequency_config = dict(self.config.get("frequency_config", {}))
-        frequency_config.setdefault("background_light_data", self.config.get("background_light_data", 0))
+        frequency_config.setdefault(
+            "background_light_data", self.config.get("background_light_data", 0)
+        )
         nbr = self.adc.configure(frequency_config)
         self.nbr_of_points = nbr  # configure() returns the real point count
 
@@ -66,4 +68,6 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         total_periods = pre_periods + periods + post_periods
 
         total_duration_ms = total_periods * 1000.0 / freq
-        self.time_values = np.linspace(0, total_duration_ms, self.nbr_of_points, endpoint=False).tolist()
+        self.time_values = np.linspace(
+            0, total_duration_ms, self.nbr_of_points, endpoint=False
+        ).tolist()

@@ -5,6 +5,7 @@ Call setup_fonts() once, right after dpg.create_context().
 Then call large() anywhere to get the large-font handle (or None if unavailable).
 Call monospace_large() to get a larger monospace font for sequence inputs.
 """
+
 from pathlib import Path
 import dearpygui.dearpygui as dpg
 
@@ -38,8 +39,7 @@ def setup_fonts(large_size: int = 19, monospace_large_size: int = 40) -> None:
         if font_path is not None:
             _LARGE = dpg.add_font(font_path, large_size)
         if _CONSOLAS.exists():
-            _MONOSPACE_LARGE = dpg.add_font(
-                str(_CONSOLAS), monospace_large_size)
+            _MONOSPACE_LARGE = dpg.add_font(str(_CONSOLAS), monospace_large_size)
 
 
 def large():

@@ -20,27 +20,35 @@ class Acquisition_win(WindowBase):
     _main_thread_queue and drained each frame on the main thread.
     """
 
-    def __init__(self,
-                 label="Acquisition Control", pos=None, width=None, height=None,
-                 uuid=None, visible=True,
-                 state=None, bus=None):
-
+    def __init__(
+        self,
+        label="Acquisition Control",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
         self.bus = bus
 
         # --- per-run state ---
-        self.sequence_list = []   # [{str_sequence, decoded, nbr_of_points}, ...]
+        self.sequence_list = []  # [{str_sequence, decoded, nbr_of_points}, ...]
         self.sequence_index = 0
         self.stop_requested = False
-        self._run_start_time = None        # wall-clock time when the current HW run started
-        self._experiment_start_time = None # wall-clock time when the full acquisition started
+        self._run_start_time = None  # wall-clock time when the current HW run started
+        self._experiment_start_time = (
+            None  # wall-clock time when the full acquisition started
+        )
 
         # --- averaging / ignore state (reset per sequence) ---
-        self._ignored_count = 0   # how many runs have been ignored for current seq
-        self._avg_buf = []        # baseline-subtracted arrays collected so far
-        self._current_params = {} # params active for the sequence being run
+        self._ignored_count = 0  # how many runs have been ignored for current seq
+        self._avg_buf = []  # baseline-subtracted arrays collected so far
+        self._current_params = {}  # params active for the sequence being run
 
         # --- config kept from last input_cb call (applies to all sequences) ---
         _first_exp = self.state.get_experiments()[0]
@@ -63,10 +71,14 @@ class Acquisition_win(WindowBase):
         self.height = height
 
         if self.bus:
-            self.bus.subscribe("sequence_list_ready",       self._on_sequence_list_ready)
-            self.bus.subscribe("background_light_changed",  self._on_background_light_changed)
-            self.bus.subscribe("detection_led_changed",     self._on_detection_led_changed)
-            self.bus.subscribe("frequency_config_changed",  self._on_frequency_config_changed)
+            self.bus.subscribe("sequence_list_ready", self._on_sequence_list_ready)
+            self.bus.subscribe(
+                "background_light_changed", self._on_background_light_changed
+            )
+            self.bus.subscribe("detection_led_changed", self._on_detection_led_changed)
+            self.bus.subscribe(
+                "frequency_config_changed", self._on_frequency_config_changed
+            )
 
         self.build_content()
 
@@ -74,33 +86,43 @@ class Acquisition_win(WindowBase):
     # UI BUILDING
     # ----------------------------------------------------------
     def build_content(self):
-        with dpg.child_window(tag="acquisition_child_" + self.UUID,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos):
-
-            dpg.add_text("Sequence not ready.\nPlease press 'Process sequence'.",
-                         tag="sequence_state_" + self.UUID,
-                         color=(255, 0, 0))
+        with dpg.child_window(
+            tag="acquisition_child_" + self.UUID,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+        ):
+            dpg.add_text(
+                "Sequence not ready.\nPlease press 'Process sequence'.",
+                tag="sequence_state_" + self.UUID,
+                color=(255, 0, 0),
+            )
 
             dpg.add_text("", tag="sequence_counter_" + self.UUID)
 
-            dpg.add_progress_bar(tag="progress_bar_" + self.UUID,
-                                 width=-1, default_value=0.0)
+            dpg.add_progress_bar(
+                tag="progress_bar_" + self.UUID, width=-1, default_value=0.0
+            )
 
             with dpg.group(horizontal=True):
                 dpg.add_text("Time left:", color=(180, 180, 180))
-                dpg.add_text("--:--", tag="time_total_" + self.UUID, color=(100, 220, 255))
+                dpg.add_text(
+                    "--:--", tag="time_total_" + self.UUID, color=(100, 220, 255)
+                )
 
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Start",
-                               tag="start_" + self.UUID,
-                               callback=self._start_acquisition,
-                               width=150)
-                dpg.add_button(label="Stop",
-                               tag="stop_" + self.UUID,
-                               width=150,
-                               callback=self._stop_acquisition)
+                dpg.add_button(
+                    label="Start",
+                    tag="start_" + self.UUID,
+                    callback=self._start_acquisition,
+                    width=150,
+                )
+                dpg.add_button(
+                    label="Stop",
+                    tag="stop_" + self.UUID,
+                    width=150,
+                    callback=self._stop_acquisition,
+                )
 
             dpg.configure_item("start_" + self.UUID, enabled=False)
             dpg.configure_item("stop_" + self.UUID, enabled=False)
@@ -118,7 +140,8 @@ class Acquisition_win(WindowBase):
             dpg.configure_item("start_" + self.UUID, enabled=True)
             self._set_status(
                 f"{len(self.decoded_sequence_list)} sequence(s) ready. Click Start.",
-                color=(0, 255, 0))
+                color=(0, 255, 0),
+            )
         elif not self.decoded_sequence_list:
             self._set_status("No sequences found. Check inputs.", color=(255, 100, 0))
         else:
@@ -130,7 +153,9 @@ class Acquisition_win(WindowBase):
     def _check_hardware(self):
         adc = self.state.get_adc_instance()
         # esp32 = self.state.get_esp32_instance()
-        adc_ok = adc is not None and (adc.is_connected() if hasattr(adc, "is_connected") else True)
+        adc_ok = adc is not None and (
+            adc.is_connected() if hasattr(adc, "is_connected") else True
+        )
         # esp32_ok = esp32 is not None and (esp32.is_connected() if hasattr(esp32, "is_connected") else True)
         self.is_ready = adc_ok
 
@@ -198,18 +223,23 @@ class Acquisition_win(WindowBase):
         total = len(self.decoded_sequence_list)
 
         # Load per-sequence parameters (seq[2] = stable n, added by sequence_handler)
-        n = seq[2] if (isinstance(seq, (tuple, list)) and len(seq) > 2) else (self.sequence_index + 1)
+        n = (
+            seq[2]
+            if (isinstance(seq, (tuple, list)) and len(seq) > 2)
+            else (self.sequence_index + 1)
+        )
         params = self.state.get_parameter_list(n) if self.state else None
         if params is None:
             params = dict(self.state.parameter_config) if self.state else {}
         self._current_params = params
 
         n_ignore = params.get("nbr_sequences_ignored", 0)
-        n_avg    = params.get("nbr_of_averages", 1)
+        n_avg = params.get("nbr_of_averages", 1)
 
         self._set_status(
             f"Running sequence {self.sequence_index + 1}/{total}...",
-            color=(255, 200, 0))
+            color=(255, 200, 0),
+        )
         if n_ignore > 0 or n_avg > 1:
             self._set_counter(f"ignore={n_ignore}  avg={n_avg}")
 
@@ -219,14 +249,16 @@ class Acquisition_win(WindowBase):
             config["frequency_config"] = seq[3]
 
         self._run_start_time = time.time()
-        self.worker_thread.send_command({
-            "action": "configure",
-            "sequence": seq[0],
-            "nbr_of_points": seq[1],
-            "experiment_type": self.acquisition_type,
-            "config": config,
-            "tab_name": self.tab_name,
-        })
+        self.worker_thread.send_command(
+            {
+                "action": "configure",
+                "sequence": seq[0],
+                "nbr_of_points": seq[1],
+                "experiment_type": self.acquisition_type,
+                "config": config,
+                "tab_name": self.tab_name,
+            }
+        )
         self.worker_thread.send_command({"action": "start"})
 
     # ----------------------------------------------------------
@@ -243,8 +275,8 @@ class Acquisition_win(WindowBase):
         self.polling_enabled = True
         self.polling_thread_stop.clear()
         self.polling_thread = threading.Thread(
-            target=self._poll_worker_results,
-            daemon=True)
+            target=self._poll_worker_results, daemon=True
+        )
         self.polling_thread.start()
         # Drain the main-thread queue every frame
         self._schedule_drain()
@@ -315,17 +347,17 @@ class Acquisition_win(WindowBase):
         """One run finished. Apply processing, then average/ignore/advance.
         Runs on the polling thread — never call DPG directly here.
         Use _main_thread_queue for anything that touches DPG items."""
-        params     = self._current_params
-        n_baseline = params.get("baseline_points",          0)
-        n_ignore   = params.get("nbr_sequences_ignored",    0)
-        n_avg      = params.get("nbr_of_averages",          1)
-        t_wait_ms  = params.get("time_between_averages_ms", 0)
+        params = self._current_params
+        n_baseline = params.get("baseline_points", 0)
+        n_ignore = params.get("nbr_sequences_ignored", 0)
+        n_avg = params.get("nbr_of_averages", 1)
+        t_wait_ms = params.get("time_between_averages_ms", 0)
 
         # ── Baseline subtraction ──────────────────────────────────────────
         y = np.array(msg["final_results"], dtype=float)
         if n_baseline > 0 and len(y) >= n_baseline:
             y -= float(np.mean(y[:n_baseline]))
-        y_list      = y.tolist()
+        y_list = y.tolist()
         time_values = msg["time_values"]
 
         # clear_live calls delete_item — must run on main thread
@@ -349,11 +381,16 @@ class Acquisition_win(WindowBase):
         if run_number < n_avg:
             self._set_counter(f"Averaging: run {run_number}/{n_avg}")
             # Deferred to main thread (creates new DPG series)
-            self._main_thread_queue.put(("intermediate_data", {
-                "time_values":   time_values,
-                "final_results": y_list,
-                "run":           run_number,
-            }))
+            self._main_thread_queue.put(
+                (
+                    "intermediate_data",
+                    {
+                        "time_values": time_values,
+                        "final_results": y_list,
+                        "run": run_number,
+                    },
+                )
+            )
             if not self.stop_requested:
                 if t_wait_ms > 0:
                     time.sleep(t_wait_ms / 1000.0)
@@ -365,23 +402,32 @@ class Acquisition_win(WindowBase):
         # Deferred to main thread (creates new DPG series + container items)
         self._main_thread_queue.put(("clear_intermediates", {}))
         seq_entry = self.decoded_sequence_list.get(self.sequence_index)
-        str_sequence = (seq_entry[3]
-                        if isinstance(seq_entry, (tuple, list)) and len(seq_entry) > 3
-                        else "")
-        self._main_thread_queue.put(("final_data", {
-            "time_values":   time_values,
-            "final_results": mean_y,
-            "sequence":      msg.get("sequence"),
-            "str_sequence":  str_sequence,
-            "series_id":     self.sequence_index,
-            "n_avg":         n_avg,
-        }))
+        str_sequence = (
+            seq_entry[3]
+            if isinstance(seq_entry, (tuple, list)) and len(seq_entry) > 3
+            else ""
+        )
+        self._main_thread_queue.put(
+            (
+                "final_data",
+                {
+                    "time_values": time_values,
+                    "final_results": mean_y,
+                    "sequence": msg.get("sequence"),
+                    "str_sequence": str_sequence,
+                    "series_id": self.sequence_index,
+                    "n_avg": n_avg,
+                },
+            )
+        )
 
         # ── Advance to next sequence ──────────────────────────────────────
         self.sequence_index += 1
         self._reset_seq_run_state()
         t_wait_between_sequences_ms = params.get("time_before_next_seq_ms", 0)
-        if not self.stop_requested and self.sequence_index < len(self.decoded_sequence_list):
+        if not self.stop_requested and self.sequence_index < len(
+            self.decoded_sequence_list
+        ):
             if t_wait_between_sequences_ms > 0:
                 time.sleep(t_wait_between_sequences_ms / 1000.0)
             self._run_current_sequence()
@@ -394,15 +440,16 @@ class Acquisition_win(WindowBase):
         self.polling_thread_stop.set()
 
         total = len(self.decoded_sequence_list)
-        done  = self.sequence_index
+        done = self.sequence_index
 
         def _finish():
             dpg.configure_item("start_" + self.UUID, enabled=True)
-            dpg.configure_item("stop_"  + self.UUID, enabled=False)
+            dpg.configure_item("stop_" + self.UUID, enabled=False)
             dpg.set_value("progress_bar_" + self.UUID, 1.0)
             self._clear_time_displays()
-            self._set_status(f"Done: {done}/{total} sequence(s) completed.",
-                             color=(0, 200, 0))
+            self._set_status(
+                f"Done: {done}/{total} sequence(s) completed.", color=(0, 200, 0)
+            )
             self._set_counter("")
             if self.bus:
                 self.bus.publish("acquisition_complete")

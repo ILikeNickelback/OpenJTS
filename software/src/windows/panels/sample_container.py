@@ -7,15 +7,20 @@ from core.window_base import WindowBase
 from utils.json_file_manager import JsonFileManager
 
 
-def _tk_save_file(title="Save as", filetypes=(("JSON files", "*.json"), ("All files", "*.*")),
-                  defaultextension=".json") -> str:
+def _tk_save_file(
+    title="Save as",
+    filetypes=(("JSON files", "*.json"), ("All files", "*.*")),
+    defaultextension=".json",
+) -> str:
     root = tk.Tk()
     root.withdraw()
     root.wm_attributes("-topmost", True)
-    path = filedialog.asksaveasfilename(title=title, filetypes=filetypes,
-                                        defaultextension=defaultextension, parent=root)
+    path = filedialog.asksaveasfilename(
+        title=title, filetypes=filetypes, defaultextension=defaultextension, parent=root
+    )
     root.destroy()
     return path or ""
+
 
 class Sample_container_win(WindowBase):
     """
@@ -27,10 +32,18 @@ class Sample_container_win(WindowBase):
     right-click context menu. Selected samples can be exported to JSON.
     """
 
-    def __init__(self, label="Sample Container", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None,
-                 experiment_name=None):
-
+    def __init__(
+        self,
+        label="Sample Container",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+        experiment_name=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
         self.json = JsonFileManager()
         self.json.create_dialogs()
@@ -49,21 +62,36 @@ class Sample_container_win(WindowBase):
         self.bassline_points = 4
 
         if bus:
-            bus.subscribe("final_data", lambda final_results, time_values, sequence, **_:
-                          self.input_cb(y=final_results, x=time_values, sequence=sequence))
-            bus.subscribe("bassline_points_changed", lambda nbr_of_points, **_:
-                          self.input_cb_processing(nbr_of_points))
+            bus.subscribe(
+                "final_data",
+                lambda final_results, time_values, sequence, **_: self.input_cb(
+                    y=final_results, x=time_values, sequence=sequence
+                ),
+            )
+            bus.subscribe(
+                "bassline_points_changed",
+                lambda nbr_of_points, **_: self.input_cb_processing(nbr_of_points),
+            )
 
-        with dpg.child_window(label=self.label,
-                        width=width,
-                        height=height,
-                        pos=pos,
-                        tag=self.winID,
-                        show=visible):
-
-            dpg.add_button(label="Select all", width=-1, callback=self.select_all_samples_cb)
-            dpg.add_button(label="Deselect all", width=-1, callback=self.deselect_all_samples_cb)
-            dpg.add_button(label="Save selected samples", width=-1, callback=self.save_selected_samples)
+        with dpg.child_window(
+            label=self.label,
+            width=width,
+            height=height,
+            pos=pos,
+            tag=self.winID,
+            show=visible,
+        ):
+            dpg.add_button(
+                label="Select all", width=-1, callback=self.select_all_samples_cb
+            )
+            dpg.add_button(
+                label="Deselect all", width=-1, callback=self.deselect_all_samples_cb
+            )
+            dpg.add_button(
+                label="Save selected samples",
+                width=-1,
+                callback=self.save_selected_samples,
+            )
             dpg.add_group(tag=self.samples_group_tag)
 
     def save_selected_samples(self):
@@ -72,8 +100,8 @@ class Sample_container_win(WindowBase):
             if dpg.get_value(f"sample_checkbox_{self.UUID}_{UUID}"):
                 selected_samples[sample["name"]] = {
                     "sequence": sample["sequence"],
-                    "time":  [float(t) for t in sample["x"]],
-                    "values": [float(v) for v in sample["y"]]
+                    "time": [float(t) for t in sample["x"]],
+                    "values": [float(v) for v in sample["y"]],
                 }
 
         if not selected_samples:
@@ -86,11 +114,11 @@ class Sample_container_win(WindowBase):
         with open(path, "w", encoding="utf-8") as f:
             json.dump(selected_samples, f, indent=4)
 
-
-
     def input_cb(self, *args, **kwargs):
         y = kwargs.get("y") or (args[0] if args and isinstance(args[0], list) else None)
-        x = kwargs.get("x") or (args[1] if len(args) > 1 and isinstance(args[1], list) else None)
+        x = kwargs.get("x") or (
+            args[1] if len(args) > 1 and isinstance(args[1], list) else None
+        )
         sequence = kwargs.get("sequence")
         name = kwargs.get("name", None)
         UUID = kwargs.get("uuid", None)
@@ -102,8 +130,14 @@ class Sample_container_win(WindowBase):
         if name is None:
             sample_id = ""
             if self.state and self.experiment_name:
-                exp = next((e for e in self.state.get_experiments()
-                            if e["name"] == self.experiment_name), {})
+                exp = next(
+                    (
+                        e
+                        for e in self.state.get_experiments()
+                        if e["name"] == self.experiment_name
+                    ),
+                    {},
+                )
                 sample_id = exp.get("sample_id", "") or ""
             name = sample_id if sample_id else f"{UUID}"
 
@@ -112,21 +146,32 @@ class Sample_container_win(WindowBase):
             "x": x,
             "sequence": sequence,
             "name": name,
-            "uuid": UUID
+            "uuid": UUID,
         }
 
         dpg.push_container_stack(self.samples_group_tag)
         with dpg.group(horizontal=True, tag=f"sample_group_{self.UUID}_{UUID}"):
-            dpg.add_checkbox(tag=f"sample_checkbox_{self.UUID}_{UUID}",
-                           default_value=True,
-                           callback=self.sample_checkbox_cb,
-                           user_data=UUID)
+            dpg.add_checkbox(
+                tag=f"sample_checkbox_{self.UUID}_{UUID}",
+                default_value=True,
+                callback=self.sample_checkbox_cb,
+                user_data=UUID,
+            )
             with dpg.popup(dpg.last_item(), mousebutton=dpg.mvMouseButton_Right):
-                dpg.add_menu_item(label="Delete", user_data=UUID, callback=self.delete_sample_cb)
+                dpg.add_menu_item(
+                    label="Delete", user_data=UUID, callback=self.delete_sample_cb
+                )
 
-            dpg.add_input_text(tag=f"sample_name_{self.UUID}_{UUID}", default_value=f"{name}", callback=self.sample_name_cb, user_data=UUID)
+            dpg.add_input_text(
+                tag=f"sample_name_{self.UUID}_{UUID}",
+                default_value=f"{name}",
+                callback=self.sample_name_cb,
+                user_data=UUID,
+            )
             with dpg.popup(dpg.last_item(), mousebutton=dpg.mvMouseButton_Right):
-                dpg.add_menu_item(label="Delete", user_data=UUID, callback=self.delete_sample_cb)
+                dpg.add_menu_item(
+                    label="Delete", user_data=UUID, callback=self.delete_sample_cb
+                )
         dpg.pop_container_stack()
 
         self.sample_checkbox_cb(f"sample_checkbox_{UUID}", True, UUID)
@@ -138,7 +183,10 @@ class Sample_container_win(WindowBase):
             x = self.samples_dict[UUID]["x"]
             name = self.samples_dict[UUID]["name"]
 
-            cmd = {"action": "add serie", "data": {"y": y, "x": x, "name": name, "uuid": f"{self.UUID}_{UUID}"}}
+            cmd = {
+                "action": "add serie",
+                "data": {"y": y, "x": x, "name": name, "uuid": f"{self.UUID}_{UUID}"},
+            }
             self.trigger_cb(cmd=cmd)
         else:
             cmd = {"action": "remove serie", "data": {"uuid": f"{self.UUID}_{UUID}"}}
@@ -150,7 +198,10 @@ class Sample_container_win(WindowBase):
 
         if new_name:
             self.samples_dict[UUID]["name"] = new_name
-            cmd = {"action": "update serie name", "data": {"name": new_name, "uuid": f"{self.UUID}_{UUID}"}}
+            cmd = {
+                "action": "update serie name",
+                "data": {"name": new_name, "uuid": f"{self.UUID}_{UUID}"},
+            }
             self.trigger_cb(cmd=cmd)
             if self.bus:
                 self.bus.publish("serie_renamed", series_id=UUID - 1, name=new_name)
@@ -184,9 +235,9 @@ class Sample_container_win(WindowBase):
         return [
             {
                 "final_results": sample["y"],
-                "time_values":   sample["x"],
-                "sequence":      sample["sequence"],
-                "label":         sample["name"],
+                "time_values": sample["x"],
+                "sequence": sample["sequence"],
+                "label": sample["name"],
             }
             for sample in self.samples_dict.values()
         ]
@@ -204,6 +255,7 @@ class Sample_container_win(WindowBase):
     def trigger_cb(self, **kwargs):
         if self.bus:
             self.bus.publish("plot_cmd", **kwargs)
+
 
 EXPORTED_CLASS = Sample_container_win
 EXPORTED_NAME = "Sample Container"

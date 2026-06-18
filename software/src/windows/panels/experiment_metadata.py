@@ -14,9 +14,18 @@ class Experiment_metadata_window(WindowBase):
     experiment list.
     """
 
-    def __init__(self, label="Overview window", pos=None, width=None, height=None,
-                 uuid=None, visible=True,
-                 state=None, bus=None, experiment_name=None):
+    def __init__(
+        self,
+        label="Overview window",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+        experiment_name=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.pos = pos
@@ -32,16 +41,18 @@ class Experiment_metadata_window(WindowBase):
         # Push the default date to state (default_value never fires the callback)
         self._on_field_change("date", date.today().isoformat())
 
-    def _t(self, name): return f"{self._u}_{name}"
+    def _t(self, name):
+        return f"{self._u}_{name}"
 
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Experiment metadata")
             dpg.add_separator()
             dpg.add_spacer(height=6)
@@ -53,25 +64,35 @@ class Experiment_metadata_window(WindowBase):
                 # Read-only: type fields set at creation
                 with dpg.table_row():
                     dpg.add_text("Type")
-                    exp = next((e for e in (self.state.get_experiments() if self.state else [])
-                                if e["name"] == self.experiment_name), {})
+                    exp = next(
+                        (
+                            e
+                            for e in (
+                                self.state.get_experiments() if self.state else []
+                            )
+                            if e["name"] == self.experiment_name
+                        ),
+                        {},
+                    )
                     type_str = f"{exp.get('experiment_type', '')}  ·  {exp.get('acquisition_type', '')}"
                     dpg.add_text(type_str, tag=self._t("type_label"))
 
                 dpg.add_table_row()  # spacer
 
                 for label_text, key in [
-                    ("Operator",  "operator"),
-                    ("Project",   "project"),
+                    ("Operator", "operator"),
+                    ("Project", "project"),
                     ("Sample ID", "sample_id"),
-                    ("Date",      "date"),
+                    ("Date", "date"),
                 ]:
                     with dpg.table_row():
                         dpg.add_text(label_text)
                         dpg.add_input_text(
                             tag=self._t(key),
                             hint=label_text,
-                            default_value=date.today().isoformat() if key == "date" else "",
+                            default_value=date.today().isoformat()
+                            if key == "date"
+                            else "",
                             width=-1,
                             user_data=key,
                             callback=self._field_cb,
@@ -84,7 +105,8 @@ class Experiment_metadata_window(WindowBase):
             dpg.add_input_text(
                 tag=self._t("comments"),
                 hint="General comments about the experiment...",
-                width=-1, height=-1,
+                width=-1,
+                height=-1,
                 multiline=True,
                 user_data="comments",
                 callback=self._field_cb,

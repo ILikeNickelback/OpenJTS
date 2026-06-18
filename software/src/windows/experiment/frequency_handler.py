@@ -13,11 +13,17 @@ class Frequency_handler_window(WindowBase):
     ``sequence_list_ready`` is published on the bus.
     """
 
-    def __init__(self, label="Frequency Handler",
-                 pos=None, width=None, height=None,
-                 uuid=None, visible=True,
-                 state=None, bus=None):
-
+    def __init__(
+        self,
+        label="Frequency Handler",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
         self.state = state
         self.bus = bus
@@ -35,13 +41,14 @@ class Frequency_handler_window(WindowBase):
         return f"freqh_{name}_{self.UUID}"
 
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Frequency handler")
             dpg.add_separator()
             dpg.add_spacer(height=6)
@@ -61,10 +68,9 @@ class Frequency_handler_window(WindowBase):
             dpg.add_spacer(height=8)
             dpg.add_text("Not loaded", tag=self._t("status"), color=(255, 80, 80))
             dpg.add_spacer(height=8)
-            dpg.add_button(label="Load sequences",
-                           width=-1,
-                           height=40,
-                           callback=self._load)
+            dpg.add_button(
+                label="Load sequences", width=-1, height=40, callback=self._load
+            )
 
         if fonts.large():
             dpg.bind_item_font(self.winID, fonts.large())
@@ -90,31 +96,32 @@ class Frequency_handler_window(WindowBase):
             if not cfg:
                 continue
 
-            freq   = cfg.get("frequency", 0)
-            pre    = cfg.get("pre_detection", 0)
-            n_det  = cfg.get("nbr_of_periods", 0)
-            post   = cfg.get("post_detection", 0)
+            freq = cfg.get("frequency", 0)
+            pre = cfg.get("pre_detection", 0)
+            n_det = cfg.get("nbr_of_periods", 0)
+            post = cfg.get("post_detection", 0)
 
             if freq <= 0:
                 continue
 
-            period_ms     = 1000.0 / freq
-            slot_ms       = (pre + n_det + post) * period_ms
+            period_ms = 1000.0 / freq
+            slot_ms = (pre + n_det + post) * period_ms
 
             # Scale by averaging/ignore params if available
             slot_idx = entry[2]
-            params   = (self.state.get_parameter_list(slot_idx)
-                        if self.state else None) or {}
-            n_avg     = params.get("nbr_of_averages",          1)
-            n_ignore  = params.get("nbr_sequences_ignored",    0)
+            params = (
+                self.state.get_parameter_list(slot_idx) if self.state else None
+            ) or {}
+            n_avg = params.get("nbr_of_averages", 1)
+            n_ignore = params.get("nbr_sequences_ignored", 0)
             t_between = params.get("time_between_averages_ms", 0)
-            runs      = n_ignore + n_avg
+            runs = n_ignore + n_avg
 
             total_ms += runs * slot_ms + max(0, runs - 1) * t_between
 
         dpg.set_value(self._t("configs"), str(total_configs))
-        dpg.set_value(self._t("time"),    _fmt_time(total_ms))
-        dpg.set_value(self._t("status"),  "Ready")
+        dpg.set_value(self._t("time"), _fmt_time(total_ms))
+        dpg.set_value(self._t("status"), "Ready")
         dpg.configure_item(self._t("status"), color=(100, 220, 100))
 
 

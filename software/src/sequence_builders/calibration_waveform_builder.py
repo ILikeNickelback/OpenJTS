@@ -56,7 +56,9 @@ class CalibrationWaveformBuilder:
         except Exception:
             self.dev_info = None
 
-    def build(self, calibration_config: dict, intensity: float = 100.0) -> tuple[np.ndarray, int, int]:
+    def build(
+        self, calibration_config: dict, intensity: float = 100.0
+    ) -> tuple[np.ndarray, int, int]:
         """Build the interleaved waveform for one calibration period.
 
         Reads ``frequency`` and ``normal_pulses_per_period`` from
@@ -83,9 +85,13 @@ class CalibrationWaveformBuilder:
         Raises:
             ValueError: If *frequency* is zero or negative.
         """
-        freq              = float(calibration_config.get("frequency", 1.0))
-        pulses_per_period = int(calibration_config.get("normal_pulses_per_period",
-                                config["Sampling"].get("normal_pulses_per_period", 10)))
+        freq = float(calibration_config.get("frequency", 1.0))
+        pulses_per_period = int(
+            calibration_config.get(
+                "normal_pulses_per_period",
+                config["Sampling"].get("normal_pulses_per_period", 10),
+            )
+        )
 
         if freq <= 0:
             raise ValueError(f"Calibration frequency must be > 0 Hz (got {freq})")
@@ -93,27 +99,28 @@ class CalibrationWaveformBuilder:
         samples_per_period = int(self.rate / freq)
 
         interleaved = np.zeros(samples_per_period * 3, dtype=np.uint16)
-        ch1_raw = interleaved[1::3]   # analog detection pulses
-        ch2_raw = interleaved[2::3]   # digital markers
+        ch1_raw = interleaved[1::3]  # analog detection pulses
+        ch2_raw = interleaved[2::3]  # digital markers
 
-        counts_max          = 65535
-        pulse_amplitude     = int(counts_max * max(0.0, min(100.0, intensity)) / 100.0)
+        counts_max = 65535
+        pulse_amplitude = int(counts_max * max(0.0, min(100.0, intensity)) / 100.0)
         pulse_width_samples = max(1, int(self.rate * 20e-6))
-        digital_width       = max(1, int(self.rate * 10e-6))
+        digital_width = max(1, int(self.rate * 10e-6))
 
-        positions = np.linspace(4, samples_per_period, pulses_per_period,
-                                endpoint=False, dtype=int)
+        positions = np.linspace(
+            4, samples_per_period, pulses_per_period, endpoint=False, dtype=int
+        )
 
         for pos in positions:
             pulse_end = min(int(pos) + pulse_width_samples, samples_per_period)
 
-            ch1_raw[pos+1:pulse_end+1] = pulse_amplitude
+            ch1_raw[pos + 1 : pulse_end + 1] = pulse_amplitude
 
             d_start_end = min(int(pos) + digital_width, samples_per_period)
             ch2_raw[pos:d_start_end] = 0xFFFF
 
             d_end_start = pulse_end
-            d_end_end   = min(d_end_start + digital_width, samples_per_period)
+            d_end_end = min(d_end_start + digital_width, samples_per_period)
             if d_end_start < samples_per_period:
                 ch2_raw[d_end_start:d_end_end] = 0xFFFF
 
@@ -145,7 +152,7 @@ class CalibrationWaveformBuilder:
         fig.suptitle(
             f"Waveform preview  —  {frequency_config.get('frequency', '?')} Hz  "
             f"|  {frequency_config.get('nbr_of_periods', '?')} periods  "
-            f"|  rate {self.rate/1e3:.0f} kHz",
+            f"|  rate {self.rate / 1e3:.0f} kHz",
             fontsize=11,
         )
 
@@ -167,12 +174,16 @@ class CalibrationWaveformBuilder:
         post_periods = int(frequency_config.get("post_detection", 0))
         samples_per_period = int(self.rate / freq)
         pre_end_ms = pre_periods * samples_per_period / self.rate * 1000
-        post_start_ms = (total_samples - post_periods * samples_per_period) / self.rate * 1000
+        post_start_ms = (
+            (total_samples - post_periods * samples_per_period) / self.rate * 1000
+        )
         for ax in axes:
             if pre_periods > 0:
                 ax.axvspan(0, pre_end_ms, color="grey", alpha=0.15, label="pre")
             if post_periods > 0:
-                ax.axvspan(post_start_ms, t_ms[-1], color="grey", alpha=0.15, label="post")
+                ax.axvspan(
+                    post_start_ms, t_ms[-1], color="grey", alpha=0.15, label="post"
+                )
 
         fig.tight_layout()
         plt.show()

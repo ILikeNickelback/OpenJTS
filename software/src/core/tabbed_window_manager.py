@@ -1,4 +1,5 @@
 """DearPyGui tab-bar manager with dynamic tab creation and close detection."""
+
 import dearpygui.dearpygui as dpg
 from typing import Dict, List, Optional, Callable
 from loguru import logger
@@ -33,7 +34,7 @@ class TabbedWindowManager:
         self._acq_type_id = dpg.generate_uuid()
         self._exp_type_id = dpg.generate_uuid()
 
-        self.tabs:      Dict[str, int] = {}
+        self.tabs: Dict[str, int] = {}
         self.tab_order: List[str] = []
         self._builders: Dict[str, Callable] = {}
 
@@ -77,32 +78,38 @@ class TabbedWindowManager:
             no_resize=True,
             width=340,
             height=210,
-            pos=[0, 0],   # repositioned dynamically when opened
+            pos=[0, 0],  # repositioned dynamically when opened
         ):
             dpg.add_text("Experiment name:")
             dpg.add_input_text(
                 tag=self._input_id,
                 hint="e.g. Run 01",
                 width=-1,
-                on_enter=True,           # pressing Enter confirms
+                on_enter=True,  # pressing Enter confirms
                 callback=self._confirm,
             )
             dpg.add_separator()
 
             with dpg.group(horizontal=True):
-                dpg.add_radio_button(["Fluo", "Spectro"], tag=self._exp_type_id,
-                                     horizontal=True, default_value="Fluo")
+                dpg.add_radio_button(
+                    ["Fluo", "Spectro"],
+                    tag=self._exp_type_id,
+                    horizontal=True,
+                    default_value="Fluo",
+                )
 
             with dpg.group(horizontal=True):
-                dpg.add_radio_button(["Sequence", "Frequency"], tag=self._acq_type_id,
-                                     horizontal=True, default_value="Sequence")
+                dpg.add_radio_button(
+                    ["Sequence", "Frequency"],
+                    tag=self._acq_type_id,
+                    horizontal=True,
+                    default_value="Sequence",
+                )
 
             dpg.add_spacer(height=6)
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Create", width=120,
-                               callback=self._confirm)
-                dpg.add_button(label="Cancel", width=120,
-                               callback=self._cancel)
+                dpg.add_button(label="Create", width=120, callback=self._confirm)
+                dpg.add_button(label="Cancel", width=120, callback=self._cancel)
 
     # ------------------------------------------------------------------
     # Modal logic
@@ -123,7 +130,7 @@ class TabbedWindowManager:
         name = dpg.get_value(self._input_id).strip()
         # "Sequence" or "Frequency"
         acq_type = dpg.get_value(self._acq_type_id)
-        exp_type = dpg.get_value(self._exp_type_id)   # "Fluo" or "Spectro"
+        exp_type = dpg.get_value(self._exp_type_id)  # "Fluo" or "Spectro"
         dpg.hide_item(self._modal_id)
 
         if not name:
@@ -137,8 +144,7 @@ class TabbedWindowManager:
         if self.on_add_tab is not None:
             self.on_add_tab(name, acq_type, exp_type)
         else:
-            logger.warning(
-                "on_add_tab callback not set on TabbedWindowManager")
+            logger.warning("on_add_tab callback not set on TabbedWindowManager")
 
     def _cancel(self, *_):
         """Dismiss the modal without creating a tab."""
@@ -185,8 +191,7 @@ class TabbedWindowManager:
                 try:
                     builder()
                 except Exception:
-                    logger.exception(
-                        f"Error building content for tab '{tab_label}'")
+                    logger.exception(f"Error building content for tab '{tab_label}'")
 
         self.tabs[tab_label] = tab_id
         self._builders[tab_label] = builder
@@ -262,6 +267,7 @@ class TabbedWindowManager:
             tab_label: Label of the tab being monitored.
             tab_id: DPG item ID of the tab.
         """
+
         def _check():
             if not dpg.does_item_exist(tab_id):
                 return

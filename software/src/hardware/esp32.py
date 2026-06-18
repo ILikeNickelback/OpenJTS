@@ -6,9 +6,10 @@ import time
 import serial.tools.list_ports
 from config.config import config
 
+
 class Esp32Base:
     """Handles serial communication with the ESP32."""
-    
+
     def __init__(self, baud_rate=None, timeout=None):
         self.baud_rate = baud_rate or config["ESP32"]["baud_rate"]
         self.timeout = timeout or config["ESP32"]["timeout"]
@@ -25,14 +26,14 @@ class Esp32Base:
             self.ser = None
             return
         try:
-            self.ser = serial.Serial(port=port,
-                                     baudrate=self.baud_rate,
-                                     timeout=self.timeout)
+            self.ser = serial.Serial(
+                port=port, baudrate=self.baud_rate, timeout=self.timeout
+            )
             time.sleep(2)  # Required: ESP32 resets on serial open
             print(f"Connected to ESP32 on {port}")
         except serial.SerialException:
             self.ser = None
-            
+
     def disconnect(self):
         if self.ser and self.ser.is_open:
             self.ser.close()
@@ -48,14 +49,13 @@ class Esp32Base:
 
         try:
             if self.ser is not None:
-                self.ser.write(b'<')
+                self.ser.write(b"<")
                 for item in sequence:
                     self.ser.write(item.encode())
                     time.sleep(0.001)
-                self.ser.write(b'>')
+                self.ser.write(b">")
         except serial.SerialException:
             return
-
 
     # ------------------------------------------------------------
     # Internal helpers

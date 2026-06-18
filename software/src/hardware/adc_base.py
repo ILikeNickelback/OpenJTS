@@ -1,4 +1,4 @@
-﻿"""Base ADC driver for MCC DAQ boards.
+"""Base ADC driver for MCC DAQ boards.
 
 Provides shared infrastructure used by all concrete ADC subclasses:
 buffer allocation/deallocation, a background reader thread that delivers
@@ -32,7 +32,7 @@ class ADCError(RuntimeError):
     """Raised when an MCC DAQ operation fails."""
 
 
-class ADCBase():
+class ADCBase:
     """Base ADC helper for MCC DAQ boards.
 
     Manages the board connection, DMA buffer lifecycle, a background reader
@@ -66,7 +66,9 @@ class ADCBase():
 
         self.samples_per_trigger = config["Sampling"]["samples_per_trigger"]
         self.channel_count = config["ADC"]["channel_count"]
-        self.nbr_of_triggers_per_sample = config["Sampling"]["nbr_of_triggers_per_sample"]
+        self.nbr_of_triggers_per_sample = config["Sampling"][
+            "nbr_of_triggers_per_sample"
+        ]
         self.adc_bit_depth = config["ADC"]["adc_bit_depth"]
         self.actinic_light_max = config["LED"]["actinic_light_max"]
         self.actinic_light_offset = config["LED"]["actinic_light_offset"]
@@ -74,11 +76,11 @@ class ADCBase():
         self.detection_light_offset = config["LED"]["detection_light_offset"]
 
         # DMA buffer handles and ctypes array pointers
-        self._memhandle_acq: int | None = None    # 32-bit acquisition buffer
-        self._memhandle: int | None = None         # 16-bit waveform output buffer
-        self._acq_buffer_size: int | None = None   # number of values in acq buffer
-        self._c_data_array = None                  # ctypes view of _memhandle_acq
-        self._c_waveform_array = None              # ctypes view of _memhandle
+        self._memhandle_acq: int | None = None  # 32-bit acquisition buffer
+        self._memhandle: int | None = None  # 16-bit waveform output buffer
+        self._acq_buffer_size: int | None = None  # number of values in acq buffer
+        self._c_data_array = None  # ctypes view of _memhandle_acq
+        self._c_waveform_array = None  # ctypes view of _memhandle
 
         # Reader thread primitives
         self._reader_thread: threading.Thread | None = None
@@ -123,7 +125,9 @@ class ADCBase():
         if not self._memhandle_acq:
             raise ADCError("Failed to allocate acquisition buffer")
         self._acq_buffer_size = num_values
-        self._c_data_array = ctypes.cast(self._memhandle_acq, ctypes.POINTER(ctypes.c_ulong))
+        self._c_data_array = ctypes.cast(
+            self._memhandle_acq, ctypes.POINTER(ctypes.c_ulong)
+        )
         logger.debug("Allocated acq buffer (32-bit) size=%d", num_values)
 
     def _alloc_waveform_buffer_16(self, num_values: int) -> None:
@@ -141,7 +145,9 @@ class ADCBase():
         self._memhandle = ul.win_buf_alloc(num_values)
         if not self._memhandle:
             raise ADCError("Failed to allocate waveform buffer")
-        self._c_waveform_array = ctypes.cast(self._memhandle, ctypes.POINTER(ctypes.c_ushort))
+        self._c_waveform_array = ctypes.cast(
+            self._memhandle, ctypes.POINTER(ctypes.c_ushort)
+        )
         logger.debug("Allocated waveform buffer (16-bit) size=%d", num_values)
 
     def _free_acq_buffer(self) -> None:
@@ -173,8 +179,12 @@ class ADCBase():
         """
         self.stop_reader()
         try:
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.AIFUNCTION)
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.AIFUNCTION
+            )
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
+            )
         except Exception as e:
             if "not running" not in str(e).lower():
                 logger.exception("Error stopping background acquisition")
@@ -236,7 +246,9 @@ class ADCBase():
         Returns:
             Voltage in volts.
         """
-        return ul.to_eng_units_32(board_num=self.board_num, ul_range=ul_range, data_value=raw)
+        return ul.to_eng_units_32(
+            board_num=self.board_num, ul_range=ul_range, data_value=raw
+        )
 
     def from_voltage_16(self, volts: float, ao_range) -> int:
         """Convert a voltage to a 16-bit DAC count for analog output.
@@ -267,7 +279,9 @@ class ADCBase():
                     self._data_queue.get_nowait()
                 except queue.Empty:
                     break
-            self._reader_thread = threading.Thread(target=self._reader_loop, daemon=True)
+            self._reader_thread = threading.Thread(
+                target=self._reader_loop, daemon=True
+            )
             self._reader_thread.start()
             logger.debug("Started ADC reader thread")
 
@@ -311,7 +325,9 @@ class ADCBase():
                             trigger_block.append(self._c_data_array[i])
                     last_count = cur_count
 
-                    block_size = self.samples_per_trigger * self.nbr_of_triggers_per_sample
+                    block_size = (
+                        self.samples_per_trigger * self.nbr_of_triggers_per_sample
+                    )
                     while len(trigger_block) >= block_size:
                         self._data_queue.put(trigger_block[:block_size])
                         trigger_block = trigger_block[block_size:]
@@ -357,7 +373,10 @@ class ADCBase():
             amplitude: Desired intensity in config units (0 to detection_light_max).
         """
         count_max = self.adc_bit_depth
-        val = int(count_max * (0.5 + 0.5 * amplitude / self.detection_light_max) - self.detection_light_offset)
+        val = int(
+            count_max * (0.5 + 0.5 * amplitude / self.detection_light_max)
+            - self.detection_light_offset
+        )
         ul.a_out(
             board_num=self.board_num,
             channel=1,
@@ -372,15 +391,17 @@ class ADCBase():
             amplitude: Desired intensity in config units (0 to actinic_light_max).
         """
         count_max = self.adc_bit_depth
-        val = int(count_max * (0.5 + 0.5 * amplitude / self.actinic_light_max) - self.actinic_light_offset)
+        val = int(
+            count_max * (0.5 + 0.5 * amplitude / self.actinic_light_max)
+            - self.actinic_light_offset
+        )
         ul.a_out(
             board_num=self.board_num,
             channel=0,
             ul_range=ULRange.BIP10VOLTS,
             data_value=val,
         )
-    
-    
+
     def start_acquisition(self) -> None:
         """Start the retriggered AI scan then the AO/digital output scan.
 
@@ -409,8 +430,12 @@ class ADCBase():
         leaked even if a stop call raises.
         """
         try:
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.AIFUNCTION)
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.AIFUNCTION
+            )
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
+            )
         finally:
             self._free_acq_buffer()
             self._free_waveform_buffer()

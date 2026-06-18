@@ -25,14 +25,15 @@ class WindowBase:
         winID (str): DPG item tag, formed as ``"<label>_<UUID>"``.
     """
 
-    def __init__(self,
-                 label="Window",
-                 pos=(10, 10),
-                 win_width=-1,
-                 win_height=-1,
-                 uuid=None,
-                 visible=True,
-                 ):
+    def __init__(
+        self,
+        label="Window",
+        pos=(10, 10),
+        win_width=-1,
+        win_height=-1,
+        uuid=None,
+        visible=True,
+    ):
         """Initialise window identity and geometry attributes.
 
         Args:
