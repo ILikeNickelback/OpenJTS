@@ -81,16 +81,16 @@ class sequence_decoder:
 
         Supported time units and their millisecond multipliers:
 
-        ======  ===========
-        Unit    Multiplier
-        ======  ===========
-        ``ms``  1
-        ``s``   1000
-        ``us``  0.001
-        ``µs``  0.001
-        ``m``   1
+        ========  ===========
+        Unit      Multiplier
+        ========  ===========
+        ``ms``    1
+        ``s``     1000
+        ``us``    0.001
+        ``µs``    0.001
+        ``m``     1
         *(none)*  1
-        ======  ===========
+        ========  ===========
 
         Args:
             sequence: Human-readable sequence string, e.g.

@@ -16,6 +16,7 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
     """Worker for the detection-LED calibration loop.
 
     Differences from sequence/frequency workers:
+
     - Runs indefinitely (nbr_of_points=None) until manually stopped.
     - Uses its own command set: configure_calibration / start_calibration /
       stop_calibration / shutdown / set_detection_intensity.

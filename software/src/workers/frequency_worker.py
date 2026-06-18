@@ -13,6 +13,7 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
 
     Expects the configure command to carry:
         config["frequency_config"]  -- dict of frequency parameters
+
     and self.sequence to hold the decoded sequence.
 
     configure() returns the number of logical acquisition points,
