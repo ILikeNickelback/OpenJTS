@@ -58,18 +58,18 @@ class SequenceAcquisitionWorker(AcquisitionBaseWorker):
         current_ms = 0.0
 
         for token in self.sequence:
-            if token in ('|', '0', '1'):
+            if token in ("|", "0", "1"):
                 continue
-            elif token == 'D':
+            elif token == "D":
                 times_ms.append(current_ms)
                 current_ms += ANALOG_PULSE_WIDTH_MS
-            elif token == 'L':
+            elif token == "L":
                 pass
             else:
-                stripped = token.rstrip('!')
+                stripped = token.rstrip("!")
                 try:
                     value = float(stripped)
-                    if not token.endswith('!'):
+                    if not token.endswith("!"):
                         current_ms += value  # delay in ms
                 except ValueError:
                     pass

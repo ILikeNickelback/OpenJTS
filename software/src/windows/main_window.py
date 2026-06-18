@@ -54,11 +54,11 @@ class Main_win:
 
         # Set via setup() after layout.create_windows() runs
         self._get_tabs_fn = None
-        self._restore_fn  = None
-        self._app_state   = None
-        self._bus         = None
+        self._restore_fn = None
+        self._app_state = None
+        self._bus = None
 
-        self._workspace_dir: Path | None = None   # set after first Save As
+        self._workspace_dir: Path | None = None  # set after first Save As
 
         with dpg.window(tag=self.winID):
             # ── Menu bar ────────────────────────────────────────────────
@@ -118,9 +118,7 @@ class Main_win:
         # ── Theme ────────────────────────────────────────────────────────
         with dpg.theme() as mainwin_theme:
             with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(
-                    dpg.mvThemeCol_WindowBg, (20, 20, 25, 255)
-                )
+                dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (20, 20, 25, 255))
         dpg.bind_item_theme(self.winID, mainwin_theme)
 
     # ------------------------------------------------------------------
@@ -137,10 +135,10 @@ class Main_win:
         get_tabs_fn  : callable() -> dict   (layout.get_experiment_tabs)
         restore_fn   : callable(data, ...)  (layout.restore_workspace)
         """
-        self._app_state  = state
-        self._bus        = bus
+        self._app_state = state
+        self._bus = bus
         self._get_tabs_fn = get_tabs_fn
-        self._restore_fn  = restore_fn
+        self._restore_fn = restore_fn
 
     # ------------------------------------------------------------------
     # Save workspace  (native Windows dialogs)
@@ -189,9 +187,11 @@ class Main_win:
     def _open_load_dialog(self):
         file_path = _tk_file(
             title="Open workspace.json",
-            filetypes=[("Workspace file", "workspace.json"),
-                       ("JSON files", "*.json"),
-                       ("All files", "*.*")],
+            filetypes=[
+                ("Workspace file", "workspace.json"),
+                ("JSON files", "*.json"),
+                ("All files", "*.*"),
+            ],
         )
         if not file_path:
             return
@@ -218,4 +218,3 @@ class Main_win:
                 self._bus,
                 self.control_tabs,
             )
-

@@ -11,7 +11,12 @@ from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 _SEQUENCES_FILE = Path(__file__).parent.parent.parent / "config" / "sequences.json"
 
-_ALL_SECTIONS = ["Sequence_Fluo", "Sequence_Spectro", "Frequency_Fluo", "Frequency_Spectro"]
+_ALL_SECTIONS = [
+    "Sequence_Fluo",
+    "Sequence_Spectro",
+    "Frequency_Fluo",
+    "Frequency_Spectro",
+]
 
 
 def _load_file() -> dict:
@@ -41,8 +46,17 @@ class SequenceLibraryWindow(WindowBase):
     input window via the event bus.
     """
 
-    def __init__(self, label="Load Experiment", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None):
+    def __init__(
+        self,
+        label="Load Experiment",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -76,47 +90,71 @@ class SequenceLibraryWindow(WindowBase):
     # ------------------------------------------------------------------
     # Tag helper
     # ------------------------------------------------------------------
-    def _t(self, name): return f"le_{name}_{self.UUID}"
+    def _t(self, name):
+        return f"le_{name}_{self.UUID}"
 
     # ------------------------------------------------------------------
     # UI
     # ------------------------------------------------------------------
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Sequence library")
             dpg.add_text("", tag=self._t("section_label"), color=(180, 180, 100))
             dpg.add_separator()
             dpg.add_spacer(height=4)
 
-            with dpg.table(tag=self._t("table"),
-                           header_row=True,
-                           borders_outerH=True, borders_outerV=True,
-                           borders_innerH=True, borders_innerV=True,
-                           row_background=True,
-                           scrollY=True,
-                           freeze_rows=1,
-                           height=-40):
-                dpg.add_table_column(label="Name",     width_fixed=True,  init_width_or_weight=120)
+            with dpg.table(
+                tag=self._t("table"),
+                header_row=True,
+                borders_outerH=True,
+                borders_outerV=True,
+                borders_innerH=True,
+                borders_innerV=True,
+                row_background=True,
+                scrollY=True,
+                freeze_rows=1,
+                height=-40,
+            ):
+                dpg.add_table_column(
+                    label="Name", width_fixed=True, init_width_or_weight=120
+                )
                 dpg.add_table_column(label="Sequence", width_stretch=True)
-                dpg.add_table_column(label="",         width_fixed=True,  init_width_or_weight=60)
-                dpg.add_table_column(label="",         width_fixed=True,  init_width_or_weight=55)
+                dpg.add_table_column(
+                    label="", width_fixed=True, init_width_or_weight=60
+                )
+                dpg.add_table_column(
+                    label="", width_fixed=True, init_width_or_weight=55
+                )
 
             self._populate_table()
 
             dpg.add_spacer(height=4)
             with dpg.group(horizontal=True):
-                dpg.add_button(label="+ New",        tag=self._t("btn_new"),
-                               width=90,  callback=self._new_entry_modal)
-                dpg.add_button(label="Save current", tag=self._t("btn_save"),
-                               width=110, callback=self._save_current)
-                dpg.add_button(label="Reload",       tag=self._t("btn_reload"),
-                               width=80,  callback=self._reload)
+                dpg.add_button(
+                    label="+ New",
+                    tag=self._t("btn_new"),
+                    width=90,
+                    callback=self._new_entry_modal,
+                )
+                dpg.add_button(
+                    label="Save current",
+                    tag=self._t("btn_save"),
+                    width=110,
+                    callback=self._save_current,
+                )
+                dpg.add_button(
+                    label="Reload",
+                    tag=self._t("btn_reload"),
+                    width=80,
+                    callback=self._reload,
+                )
 
         self._build_modal()
 
@@ -131,36 +169,45 @@ class SequenceLibraryWindow(WindowBase):
         dpg.delete_item(table, children_only=True, slot=1)
 
         for idx, entry in enumerate(self._entries()):
-            name    = entry.get("name", "")
+            name = entry.get("name", "")
             preview = self._entry_preview(entry)
 
             with dpg.table_row(parent=table):
                 dpg.add_text(name)
 
-                seq_item = dpg.add_text(preview[:60] + "…" if len(preview) > 60 else preview)
+                seq_item = dpg.add_text(
+                    preview[:60] + "…" if len(preview) > 60 else preview
+                )
                 with dpg.tooltip(seq_item):
                     dpg.add_text(preview, wrap=400)
 
-                dpg.add_button(label="View", width=-1,
-                               callback=self._visualize_cb, user_data=idx)
-                dpg.add_button(label="+ Add", width=-1,
-                               callback=self._add_cb, user_data=idx)
+                dpg.add_button(
+                    label="View", width=-1, callback=self._visualize_cb, user_data=idx
+                )
+                dpg.add_button(
+                    label="+ Add", width=-1, callback=self._add_cb, user_data=idx
+                )
 
     def _entry_preview(self, entry: dict) -> str:
         """One-line summary shown in the table."""
         if "str_sequence" in entry:
             return entry["str_sequence"]
         cfg = entry.get("frequency_config", {})
-        return (f"{cfg.get('frequency', '?')} Hz  "
-                f"amp={cfg.get('amplitude', '?')}%  "
-                f"offset={cfg.get('offset', '?')}%  "
-                f"periods={cfg.get('nbr_of_periods', '?')}")
+        return (
+            f"{cfg.get('frequency', '?')} Hz  "
+            f"amp={cfg.get('amplitude', '?')}%  "
+            f"offset={cfg.get('offset', '?')}%  "
+            f"periods={cfg.get('nbr_of_periods', '?')}"
+        )
 
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
-    def _visualize_cb(self, _, __, user_data): self._visualize(user_data)
-    def _add_cb(self, _, __, user_data):       self._add_to_current(user_data)
+    def _visualize_cb(self, _, __, user_data):
+        self._visualize(user_data)
+
+    def _add_cb(self, _, __, user_data):
+        self._add_to_current(user_data)
 
     def _visualize(self, idx: int):
         entries = self._entries()
@@ -211,22 +258,22 @@ class SequenceLibraryWindow(WindowBase):
     # Frequency preview math (mirrors Frequency_input_window._build_preview)
     # ------------------------------------------------------------------
     def _build_frequency_preview(self, cfg: dict) -> dict:
-        freq   = cfg.get("frequency", 1.0)
-        amp    = cfg.get("amplitude", 50.0)
+        freq = cfg.get("frequency", 1.0)
+        amp = cfg.get("amplitude", 50.0)
         offset = cfg.get("offset", 50.0)
-        n_det  = cfg.get("nbr_of_periods", 1)
-        pre    = cfg.get("pre_detection", 0)
-        post   = cfg.get("post_detection", 0)
+        n_det = cfg.get("nbr_of_periods", 1)
+        pre = cfg.get("pre_detection", 0)
+        post = cfg.get("post_detection", 0)
 
         total_periods = pre + n_det + post
         if freq <= 0 or total_periods <= 0:
             return {"time_ms": [], "actinic": [], "pulses": []}
 
-        period_ms    = 1000.0 / freq
-        total_ms     = total_periods * period_ms
-        n_pts        = max(int(total_periods * 80), 3)
+        period_ms = 1000.0 / freq
+        total_ms = total_periods * period_ms
+        n_pts = max(int(total_periods * 80), 3)
         det_start_ms = pre * period_ms
-        det_end_ms   = (pre + n_det) * period_ms
+        det_end_ms = (pre + n_det) * period_ms
 
         time_ms, actinic, pulses = [], [], []
         for i in range(n_pts):
@@ -244,21 +291,36 @@ class SequenceLibraryWindow(WindowBase):
     # ------------------------------------------------------------------
     def _build_modal(self):
         modal_tag = self._t("modal")
-        with dpg.window(tag=modal_tag, label="New saved sequence",
-                        modal=True, show=False,
-                        no_resize=True, width=420, height=200):
+        with dpg.window(
+            tag=modal_tag,
+            label="New saved sequence",
+            modal=True,
+            show=False,
+            no_resize=True,
+            width=420,
+            height=200,
+        ):
             dpg.add_text("Name:")
-            dpg.add_input_text(tag=self._t("new_name"), hint="e.g. Fast decay", width=-1)
+            dpg.add_input_text(
+                tag=self._t("new_name"), hint="e.g. Fast decay", width=-1
+            )
             dpg.add_spacer(height=4)
             dpg.add_text("Sequence:")
-            dpg.add_input_text(tag=self._t("new_seq"),
-                               hint="e.g. 4(100msD)A[100]20msA[0]...",
-                               width=-1, multiline=True, height=60)
+            dpg.add_input_text(
+                tag=self._t("new_seq"),
+                hint="e.g. 4(100msD)A[100]20msA[0]...",
+                width=-1,
+                multiline=True,
+                height=60,
+            )
             dpg.add_spacer(height=6)
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Save",   width=100, callback=self._confirm_new)
-                dpg.add_button(label="Cancel", width=100,
-                               callback=lambda: dpg.hide_item(self._t("modal")))
+                dpg.add_button(label="Save", width=100, callback=self._confirm_new)
+                dpg.add_button(
+                    label="Cancel",
+                    width=100,
+                    callback=lambda: dpg.hide_item(self._t("modal")),
+                )
 
     def _new_entry_modal(self, *_):
         if self._is_frequency():
@@ -267,11 +329,11 @@ class SequenceLibraryWindow(WindowBase):
         vh = dpg.get_viewport_client_height()
         dpg.set_item_pos(self._t("modal"), [vw // 2 - 210, vh // 2 - 100])
         dpg.set_value(self._t("new_name"), "")
-        dpg.set_value(self._t("new_seq"),  "")
+        dpg.set_value(self._t("new_seq"), "")
         dpg.show_item(self._t("modal"))
 
     def _confirm_new(self, *_):
-        name    = dpg.get_value(self._t("new_name")).strip()
+        name = dpg.get_value(self._t("new_name")).strip()
         str_seq = dpg.get_value(self._t("new_seq")).strip()
         if not name or not str_seq:
             return

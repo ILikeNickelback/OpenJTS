@@ -36,15 +36,17 @@ def save_to(workspace_dir: Path, experiment_tabs: dict):
         exp_file = workspace_dir / f"{name}.json"
         with open(exp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-        experiments_index.append({
-            "name":     data.get("name", name),
-            "acq_type": data.get("acquisition_type", ""),
-            "exp_type": data.get("experiment_type", ""),
-        })
+        experiments_index.append(
+            {
+                "name": data.get("name", name),
+                "acq_type": data.get("acquisition_type", ""),
+                "exp_type": data.get("experiment_type", ""),
+            }
+        )
 
     workspace_json = {
-        "version":         VERSION,
-        "experiments":     experiments_index,
+        "version": VERSION,
+        "experiments": experiments_index,
         "global_settings": {},
     }
     with open(workspace_dir / "workspace.json", "w", encoding="utf-8") as f:
@@ -76,18 +78,18 @@ def load(workspace_json_path: Path) -> dict:
                 data = json.load(f)
         else:
             data = {
-                "name":             name,
+                "name": name,
                 "acquisition_type": entry.get("acq_type", "Sequence"),
-                "experiment_type":  entry.get("exp_type", "Fluo"),
-                "metadata":         {},
-                "sequences":        [],
-                "parameters":       {},
-                "history":          [],
-                "results":          [],
+                "experiment_type": entry.get("exp_type", "Fluo"),
+                "metadata": {},
+                "sequences": [],
+                "parameters": {},
+                "history": [],
+                "results": [],
             }
         experiment_data.append(data)
 
     return {
-        "experiments":     experiment_data,
+        "experiments": experiment_data,
         "global_settings": workspace.get("global_settings", {}),
     }

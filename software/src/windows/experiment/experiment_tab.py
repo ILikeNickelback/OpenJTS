@@ -45,14 +45,20 @@ class ExperimentTab:
     """
 
     _SUB_TABS = [
-        ("Overview",    "_build_overview"),
+        ("Overview", "_build_overview"),
         ("Setup", "_build_setup"),
-        ("Acquisition",  "_build_acquisition"),
-        ("Post-processing",    "_build_settings"),
+        ("Acquisition", "_build_acquisition"),
+        ("Post-processing", "_build_settings"),
     ]
 
-    def __init__(self, name: str = "Experiment", state=None, bus=None, acquisition_type: str = "Sequence",
-                 global_bus=None):
+    def __init__(
+        self,
+        name: str = "Experiment",
+        state=None,
+        bus=None,
+        acquisition_type: str = "Sequence",
+        global_bus=None,
+    ):
         self.name = name
         self.state = state
         self.bus = bus
@@ -60,19 +66,23 @@ class ExperimentTab:
         self.acquisition_type = acquisition_type
 
         # References set during build_content()
-        self.sequence_input_win    = None
-        self.frequency_input_win   = None
-        self.history_win           = None
-        self.lineplot_win          = None
-        self.metadata_win          = None
+        self.sequence_input_win = None
+        self.frequency_input_win = None
+        self.history_win = None
+        self.lineplot_win = None
+        self.metadata_win = None
         self.sample_container_win: Sample_container_win | None = None
-        self.acquisition_win       = None
-        self.calibration_win       = None
+        self.acquisition_win = None
+        self.calibration_win = None
 
         if bus:
             bus.subscribe("final_data", self._autosave)
-            bus.subscribe("metadata_updated",
-                          lambda **kw: global_bus.publish("metadata_updated", **kw) if global_bus else None)
+            bus.subscribe(
+                "metadata_updated",
+                lambda **kw: (
+                    global_bus.publish("metadata_updated", **kw) if global_bus else None
+                ),
+            )
 
     # ------------------------------------------------------------------
     # Top-level builder — called by TabbedWindowManager
@@ -90,7 +100,13 @@ class ExperimentTab:
         with dpg.tab_bar():
             for sub_label, method_name in self._SUB_TABS:
                 with dpg.tab(label=sub_label):
-                    with dpg.child_window(autosize_x=True, autosize_y=True, border=False, no_scrollbar=True, no_scroll_with_mouse=True):
+                    with dpg.child_window(
+                        autosize_x=True,
+                        autosize_y=True,
+                        border=False,
+                        no_scrollbar=True,
+                        no_scroll_with_mouse=True,
+                    ):
                         builder = getattr(self, method_name, None)
                         if builder:
                             try:
@@ -110,20 +126,34 @@ class ExperimentTab:
     def _build_overview(self):
         self.metadata_win = Experiment_metadata_window(
             **layout_manager.get("overview", "experiment metadata"),
-            state=self.state, bus=self.bus, experiment_name=self.name)
+            state=self.state,
+            bus=self.bus,
+            experiment_name=self.name,
+        )
         self.history_win = Sequence_history_window(
             **layout_manager.get("overview", "sequence history"),
-            state=self.state, bus=self.bus)
+            state=self.state,
+            bus=self.bus,
+        )
 
     def _build_acquisition(self):
-        self.lineplot_win         = Lineplot_win(
-            **layout_manager.get("processing", "plot"),    state=self.state, bus=self.bus,
-            experiment_name=self.name)
+        self.lineplot_win = Lineplot_win(
+            **layout_manager.get("processing", "plot"),
+            state=self.state,
+            bus=self.bus,
+            experiment_name=self.name,
+        )
         self.sample_container_win = Sample_container_win(
-            **layout_manager.get("processing", "samples"), state=self.state, bus=self.bus,
-            experiment_name=self.name)
+            **layout_manager.get("processing", "samples"),
+            state=self.state,
+            bus=self.bus,
+            experiment_name=self.name,
+        )
         self.acquisition_win = Acquisition_win(
-            **layout_manager.get("processing", "acquisition"), state=self.state, bus=self.bus)
+            **layout_manager.get("processing", "acquisition"),
+            state=self.state,
+            bus=self.bus,
+        )
 
     def _build_setup(self):
         if self.acquisition_type == "Frequency":
@@ -133,23 +163,71 @@ class ExperimentTab:
 
     def _build_sequence_setup(self):
         self.sequence_input_win = Sequence_input_window(
-            **layout_manager.get("setup", "sequence_writer"), state=self.state, bus=self.bus)
-        self.calibration_win = calibration_win(**layout_manager.get("setup", "calibration"), state=self.state, bus=self.bus)
-        Background_light_window(   **layout_manager.get("setup", "background"),       state=self.state, bus=self.bus)
-        Experiment_settings_window(**layout_manager.get("setup", "settings"),         state=self.state, bus=self.bus)
-        Sequence_plot_window(      **layout_manager.get("setup", "sequence_plot"),    state=self.state, bus=self.bus)
-        Sequence_handler_window(   **layout_manager.get("setup", "sequence_handler"), state=self.state, bus=self.bus)
-        SequenceLibraryWindow(     **layout_manager.get("setup", "Load_experiment"),  state=self.state, bus=self.bus)
+            **layout_manager.get("setup", "sequence_writer"),
+            state=self.state,
+            bus=self.bus,
+        )
+        self.calibration_win = calibration_win(
+            **layout_manager.get("setup", "calibration"), state=self.state, bus=self.bus
+        )
+        Background_light_window(
+            **layout_manager.get("setup", "background"), state=self.state, bus=self.bus
+        )
+        Experiment_settings_window(
+            **layout_manager.get("setup", "settings"), state=self.state, bus=self.bus
+        )
+        Sequence_plot_window(
+            **layout_manager.get("setup", "sequence_plot"),
+            state=self.state,
+            bus=self.bus,
+        )
+        Sequence_handler_window(
+            **layout_manager.get("setup", "sequence_handler"),
+            state=self.state,
+            bus=self.bus,
+        )
+        SequenceLibraryWindow(
+            **layout_manager.get("setup", "Load_experiment"),
+            state=self.state,
+            bus=self.bus,
+        )
 
     def _build_frequency_setup(self):
         self.frequency_input_win = Frequency_input_window(
-            **layout_manager.get("frequency_setup", "frequency_input"),   state=self.state, bus=self.bus)
-        Sequence_plot_window(      **layout_manager.get("frequency_setup", "sequence_plot"),     state=self.state, bus=self.bus)
-        Experiment_settings_window(**layout_manager.get("frequency_setup", "settings"),          state=self.state, bus=self.bus)
-        SequenceLibraryWindow(     **layout_manager.get("frequency_setup", "Load_experiment"),   state=self.state, bus=self.bus)
-        self.calibration_win = calibration_win(**layout_manager.get("frequency_setup", "calibration"), state=self.state, bus=self.bus)
-        Background_light_window(   **layout_manager.get("frequency_setup", "background"),        state=self.state, bus=self.bus)
-        Frequency_handler_window(  **layout_manager.get("frequency_setup", "frequency_handler"), state=self.state, bus=self.bus)
+            **layout_manager.get("frequency_setup", "frequency_input"),
+            state=self.state,
+            bus=self.bus,
+        )
+        Sequence_plot_window(
+            **layout_manager.get("frequency_setup", "sequence_plot"),
+            state=self.state,
+            bus=self.bus,
+        )
+        Experiment_settings_window(
+            **layout_manager.get("frequency_setup", "settings"),
+            state=self.state,
+            bus=self.bus,
+        )
+        SequenceLibraryWindow(
+            **layout_manager.get("frequency_setup", "Load_experiment"),
+            state=self.state,
+            bus=self.bus,
+        )
+        self.calibration_win = calibration_win(
+            **layout_manager.get("frequency_setup", "calibration"),
+            state=self.state,
+            bus=self.bus,
+        )
+        Background_light_window(
+            **layout_manager.get("frequency_setup", "background"),
+            state=self.state,
+            bus=self.bus,
+        )
+        Frequency_handler_window(
+            **layout_manager.get("frequency_setup", "frequency_handler"),
+            state=self.state,
+            bus=self.bus,
+        )
 
     def _build_settings(self):
         dpg.add_text("Post-processing — coming soon.")
@@ -196,17 +274,18 @@ class ExperimentTab:
             (e for e in self.state.get_experiments() if e["name"] == self.name), {}
         )
         metadata = {
-            "operator":  exp_entry.get("operator", ""),
-            "project":   exp_entry.get("project", ""),
+            "operator": exp_entry.get("operator", ""),
+            "project": exp_entry.get("project", ""),
             "sample_id": exp_entry.get("sample_id", ""),
-            "date":      exp_entry.get("date", ""),
-            "comments":  exp_entry.get("comments", ""),
+            "date": exp_entry.get("date", ""),
+            "comments": exp_entry.get("comments", ""),
         }
 
         # Sequence strings
         sequences = (
             self.sequence_input_win.get_sequence_strings()
-            if self.sequence_input_win else []
+            if self.sequence_input_win
+            else []
         )
 
         # Parameters: convert n-keyed (stable int) to position-keyed (1-based int)
@@ -230,24 +309,27 @@ class ExperimentTab:
         results = self.lineplot_win.get_results() if self.lineplot_win else []
 
         # Sample container — all accumulated samples with user-edited names
-        samples = self.sample_container_win.get_samples() if self.sample_container_win else []
+        samples = (
+            self.sample_container_win.get_samples() if self.sample_container_win else []
+        )
 
         # Frequency configs
         frequency_configs = (
             self.frequency_input_win.get_frequency_configs()
-            if self.frequency_input_win else []
+            if self.frequency_input_win
+            else []
         )
 
         return {
-            "name":              self.name,
-            "acquisition_type":  exp_entry.get("acquisition_type", ""),
-            "experiment_type":   exp_entry.get("experiment_type", ""),
-            "metadata":          metadata,
-            "sequences":         sequences,
-            "parameters":        parameters,
-            "history":           history,
-            "results":           results,
-            "samples":           samples,
+            "name": self.name,
+            "acquisition_type": exp_entry.get("acquisition_type", ""),
+            "experiment_type": exp_entry.get("experiment_type", ""),
+            "metadata": metadata,
+            "sequences": sequences,
+            "parameters": parameters,
+            "history": history,
+            "results": results,
+            "samples": samples,
             "frequency_configs": frequency_configs,
         }
 

@@ -14,8 +14,17 @@ class Sequence_history_window(WindowBase):
     history list is preserved for workspace save/restore.
     """
 
-    def __init__(self, label="Sequence history", pos=None, width=None, height=None,
-                 uuid=None, visible=True, state=None, bus=None):
+    def __init__(
+        self,
+        label="Sequence history",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self.state = state
@@ -27,7 +36,7 @@ class Sequence_history_window(WindowBase):
 
         # List of recorded entries: {date, time, str_sequence, n_avg}
         self._history = []
-        self._last_date = None   # track to suppress repeated date headers
+        self._last_date = None  # track to suppress repeated date headers
 
         self._buildui()
 
@@ -37,19 +46,21 @@ class Sequence_history_window(WindowBase):
     # ------------------------------------------------------------------
     # Tag helper
     # ------------------------------------------------------------------
-    def _t(self, name): return f"hist_{name}_{self.UUID}"
+    def _t(self, name):
+        return f"hist_{name}_{self.UUID}"
 
     # ------------------------------------------------------------------
     # UI
     # ------------------------------------------------------------------
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Sequence history")
             dpg.add_separator()
             dpg.add_spacer(height=2)
@@ -69,10 +80,10 @@ class Sequence_history_window(WindowBase):
         seq_str = str_sequence if str_sequence else "—"
 
         entry = {
-            "date":     date_str,
-            "time":     time_str,
+            "date": date_str,
+            "time": time_str,
             "sequence": seq_str,
-            "n_avg":    n_avg,
+            "n_avg": n_avg,
         }
         self._history.append(entry)
         self._append_entry(entry)
@@ -88,8 +99,8 @@ class Sequence_history_window(WindowBase):
 
         date_str = entry["date"]
         time_str = entry["time"]
-        seq_str  = entry["sequence"]
-        n_avg    = entry["n_avg"]
+        seq_str = entry["sequence"]
+        n_avg = entry["n_avg"]
 
         # Date header — only if date changed
         if date_str != self._last_date:

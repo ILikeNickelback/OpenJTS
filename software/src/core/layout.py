@@ -11,6 +11,7 @@ The module also maintains :data:`_experiment_tabs`, a registry of all live
 :class:`~windows.experiment.experiment_tab.ExperimentTab` instances keyed by
 experiment name, accessible via :func:`get_experiment_tabs`.
 """
+
 from windows.home_window import Home_win
 from windows.experiment.experiment_tab import ExperimentTab
 from core.event_bus import EventBus
@@ -45,27 +46,26 @@ def create_windows(app_state, bus, control_tabs):
     """
     # ── Static Home tab ─────────────────────────────────────────────────
     home = Home_win(state=app_state, bus=bus)
-    control_tabs.add_tab("Home", home.build_content,
-                         select=True, closeable=False)
+    control_tabs.add_tab("Home", home.build_content, select=True, closeable=False)
 
     # ── '+' callback — receives the name the user typed ──────────────────
-    def add_experiment(name: str,
-                       acquisition_type: str = "Sequence",
-                       experiment_type: str = "Fluo"):
+    def add_experiment(
+        name: str, acquisition_type: str = "Sequence", experiment_type: str = "Fluo"
+    ):
         app_state.acquisition_type = acquisition_type
         app_state.add_experiment(name, acquisition_type, experiment_type)
-        bus.publish("experiment_added", name=name,
-                    acquisition_type=acquisition_type)
+        bus.publish("experiment_added", name=name, acquisition_type=acquisition_type)
 
         tab_bus = EventBus()  # isolated bus — events stay within this tab
-        exp = ExperimentTab(name=name,
-                            state=app_state,
-                            bus=tab_bus,
-                            acquisition_type=acquisition_type,
-                            global_bus=bus)
+        exp = ExperimentTab(
+            name=name,
+            state=app_state,
+            bus=tab_bus,
+            acquisition_type=acquisition_type,
+            global_bus=bus,
+        )
         _experiment_tabs[name] = exp
-        control_tabs.add_tab(name, exp.build_content,
-                             select=True, closeable=True)
+        control_tabs.add_tab(name, exp.build_content, select=True, closeable=True)
 
     control_tabs.on_add_tab = add_experiment
 
@@ -99,7 +99,7 @@ def restore_workspace(workspace_data: dict, app_state, bus, control_tabs) -> Non
     for data in workspace_data.get("experiments", []):
         name = data["name"]
         acq_type = data.get("acquisition_type", "Sequence")
-        exp_type = data.get("experiment_type",  "Fluo")
+        exp_type = data.get("experiment_type", "Fluo")
 
         # Recreate the tab (mirrors add_experiment)
         app_state.acquisition_type = acq_type
@@ -107,11 +107,15 @@ def restore_workspace(workspace_data: dict, app_state, bus, control_tabs) -> Non
         bus.publish("experiment_added", name=name, acquisition_type=acq_type)
 
         tab_bus = EventBus()  # isolated bus — events stay within this tab
-        exp = ExperimentTab(name=name, state=app_state, bus=tab_bus, acquisition_type=acq_type,
-                            global_bus=bus)
+        exp = ExperimentTab(
+            name=name,
+            state=app_state,
+            bus=tab_bus,
+            acquisition_type=acq_type,
+            global_bus=bus,
+        )
         _experiment_tabs[name] = exp
-        control_tabs.add_tab(name, exp.build_content,
-                             select=True, closeable=True)
+        control_tabs.add_tab(name, exp.build_content, select=True, closeable=True)
 
         # build_content was triggered by add_tab — restore state now
         exp.restore_from_data(data)

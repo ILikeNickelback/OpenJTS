@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def substract_bassline(data, baseline_points):
     """Subtract a baseline from data.
 

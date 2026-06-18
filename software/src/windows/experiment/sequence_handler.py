@@ -16,11 +16,17 @@ class Sequence_handler_window(WindowBase):
     sequence delays). Publishes ``sequence_list_ready`` when done.
     """
 
-    def __init__(self, label="Sequence Handler",
-                 pos=None, width=None, height=None,
-                 uuid=None, visible=True,
-                 state=None, bus=None):
-
+    def __init__(
+        self,
+        label="Sequence Handler",
+        pos=None,
+        width=None,
+        height=None,
+        uuid=None,
+        visible=True,
+        state=None,
+        bus=None,
+    ):
         super().__init__(label=label, uuid=uuid, visible=visible)
         self.state = state
         self.bus = bus
@@ -37,13 +43,14 @@ class Sequence_handler_window(WindowBase):
         return f"seqh_{name}_{self.UUID}"
 
     def _buildui(self):
-        with dpg.child_window(label=self.label,
-                              width=self.width,
-                              height=self.height,
-                              pos=self.pos,
-                              tag=self.winID,
-                              show=self.visible):
-
+        with dpg.child_window(
+            label=self.label,
+            width=self.width,
+            height=self.height,
+            pos=self.pos,
+            tag=self.winID,
+            show=self.visible,
+        ):
             dpg.add_text("Sequence handler")
             dpg.add_separator()
             dpg.add_spacer(height=6)
@@ -63,16 +70,21 @@ class Sequence_handler_window(WindowBase):
             dpg.add_spacer(height=8)
             dpg.add_text("Not loaded", tag=self._t("status"), color=(255, 80, 80))
             dpg.add_spacer(height=8)
-            dpg.add_button(label="Load sequence",
-                           width=-1,
-                           height=40,
-                           callback=self._load_sequence_protocol)
+            dpg.add_button(
+                label="Load sequence",
+                width=-1,
+                height=40,
+                callback=self._load_sequence_protocol,
+            )
 
         if fonts.large():
             dpg.bind_item_font(self.winID, fonts.large())
 
     def _load_sequence_protocol(self):
-        if not self.state.get_adc_instance() or not self.state.get_adc_instance().is_connected():
+        if (
+            not self.state.get_adc_instance()
+            or not self.state.get_adc_instance().is_connected()
+        ):
             dpg.set_value(self._t("status"), "● ADC not connected")
             dpg.configure_item(self._t("status"), color=(255, 80, 80))
             return
@@ -91,23 +103,27 @@ class Sequence_handler_window(WindowBase):
                 n = i + 1
 
             raw_str = dpg.get_value(f"seq_input_{seq_uuid}")
-            decoded_sequence, nbr_of_points = self.sequence_control.decode_sequence(raw_str)
-            self.state.set_decoded_sequence_list((decoded_sequence, nbr_of_points, n, raw_str), i)
+            decoded_sequence, nbr_of_points = self.sequence_control.decode_sequence(
+                raw_str
+            )
+            self.state.set_decoded_sequence_list(
+                (decoded_sequence, nbr_of_points, n, raw_str), i
+            )
 
-            params    = self.state.get_parameter_list(n) or self.state.parameter_config
-            n_avg     = params.get("nbr_of_averages",          1)
-            n_ignore  = params.get("nbr_sequences_ignored",    0)
+            params = self.state.get_parameter_list(n) or self.state.parameter_config
+            n_avg = params.get("nbr_of_averages", 1)
+            n_ignore = params.get("nbr_sequences_ignored", 0)
             t_between = params.get("time_between_averages_ms", 0)
-            t_before  = params.get("time_before_next_seq_ms",  0)
+            t_before = params.get("time_before_next_seq_ms", 0)
 
             runs_this = n_ignore + n_avg
             total_runs += runs_this
 
-            parsed    = self._preview_builder._parse_sequence(decoded_sequence)
-            seq_ms    = self._preview_builder._calculate_total_time(parsed)
-            total_time_ms += (runs_this * seq_ms
-                              + max(0, runs_this - 1) * t_between
-                              + t_before)
+            parsed = self._preview_builder._parse_sequence(decoded_sequence)
+            seq_ms = self._preview_builder._calculate_total_time(parsed)
+            total_time_ms += (
+                runs_this * seq_ms + max(0, runs_this - 1) * t_between + t_before
+            )
 
         dpg.set_value(self._t("runs"), str(total_runs))
         dpg.set_value(self._t("time"), _fmt_time(total_time_ms))

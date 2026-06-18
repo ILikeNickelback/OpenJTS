@@ -60,7 +60,7 @@ class sequence_decoder:
             The fully expanded string with all repetition groups replaced by
             their literal content, e.g. ``"ABBBABBB"``.
         """
-        pattern = re.compile(r'(\d+)\(([^()]+)\)')
+        pattern = re.compile(r"(\d+)\(([^()]+)\)")
         while re.search(pattern, sequence):
             sequence = re.sub(pattern, lambda m: m.group(2) * int(m.group(1)), sequence)
         return sequence
@@ -113,42 +113,44 @@ class sequence_decoder:
 
         sequence = self.expand_parentheses(sequence)
 
-        sequence = re.sub(r'\[(\d+)\]', r'<B\1B>', sequence)
+        sequence = re.sub(r"\[(\d+)\]", r"<B\1B>", sequence)
 
         token_pattern = re.compile(
-            r'(\d+(?:\.\d+)?(?:ms|µs|us|s|m)?[A-Za-z]?)|(<B\d+B>)|(T)'
+            r"(\d+(?:\.\d+)?(?:ms|µs|us|s|m)?[A-Za-z]?)|(<B\d+B>)|(T)"
         )
         tokens = [t[0] or t[1] or t[2] for t in token_pattern.findall(sequence)]
 
         time_multipliers = {
-            'ms': 1,
-            's': 1000,
-            'us': 0.001,
-            'µs': 0.001,
-            'm': 1,
-            '': 1,
+            "ms": 1,
+            "s": 1000,
+            "us": 0.001,
+            "µs": 0.001,
+            "m": 1,
+            "": 1,
         }
 
-        listFin = [str(self.NbAcqu), '|', str(self.TimeBetweenAcqu), '|']
+        listFin = [str(self.NbAcqu), "|", str(self.TimeBetweenAcqu), "|"]
 
         for token in tokens:
-            if token.startswith('<B'):
+            if token.startswith("<B"):
                 val = token[2:-2]
-                listFin.append(f'{val}!')
+                listFin.append(f"{val}!")
                 continue
 
-            if token == 'T':
-                listFin.append('T')
+            if token == "T":
+                listFin.append("T")
                 continue
 
-            match = re.match(r'(\d+(?:\.\d+)?)(ms|µs|us|s|m)?([A-Za-z]?)', token)
+            match = re.match(r"(\d+(?:\.\d+)?)(ms|µs|us|s|m)?([A-Za-z]?)", token)
             if not match:
                 continue
 
             num, unit, char = match.groups()
             multiplier = time_multipliers.get(unit, 1)
             value = float(num) * multiplier
-            value_str = f'{value:.1f}' if '.' in str(value) or 'e' in str(value) else str(value)
+            value_str = (
+                f"{value:.1f}" if "." in str(value) or "e" in str(value) else str(value)
+            )
             listFin.append(value_str)
             if char:
                 listFin.append(char)

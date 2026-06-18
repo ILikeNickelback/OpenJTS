@@ -76,11 +76,13 @@ class SequenceWaveformBuilder:
         self.rate = rate
         self.dev_info = DaqDeviceInfo(self.board_num)
 
-        self.analog_pulse_width = 20e-6   # 20 µs
+        self.analog_pulse_width = 20e-6  # 20 µs
         self.digital_pulse_width = 10e-6  # 10 µs
         self.actinic_light_offset = config["LED"]["actinic_light_offset"]
 
-    def build(self, sequence_str: list[str], default_actinic: float = 100.0) -> Tuple[np.ndarray, int, int]:
+    def build(
+        self, sequence_str: list[str], default_actinic: float = 100.0
+    ) -> Tuple[np.ndarray, int, int]:
         """Build the interleaved waveform from a decoded sequence token list.
 
         Parses *sequence_str* into typed commands, allocates a ``uint16``
@@ -132,19 +134,24 @@ class SequenceWaveformBuilder:
         digital_pulse_count = 0
 
         for item in sequence:
-            if item['type'] == 'intensity':
-                current_actinic = item['value']
-                intensity_counts = int(counts_max * (0.5 + 0.5 * current_actinic / 100) - self.actinic_light_offset)
+            if item["type"] == "intensity":
+                current_actinic = item["value"]
+                intensity_counts = int(
+                    counts_max * (0.5 + 0.5 * current_actinic / 100)
+                    - self.actinic_light_offset
+                )
                 # Applied from current position onward; overwritten by the next intensity token.
                 ch0_raw[current_sample:] = intensity_counts
 
-            elif item['type'] == 'delay':
-                delay_samples = int(item['value'] * self.rate / 1000.0)
+            elif item["type"] == "delay":
+                delay_samples = int(item["value"] * self.rate / 1000.0)
                 current_sample = min(current_sample + delay_samples, total_samples)
 
-            elif item['type'] == 'detection':
+            elif item["type"] == "detection":
                 pulse_width_samples = int(self.analog_pulse_width * self.rate)
-                digital_width_samples = max(1, int(self.rate * self.digital_pulse_width))
+                digital_width_samples = max(
+                    1, int(self.rate * self.digital_pulse_width)
+                )
 
                 # Analog pulse (20 µs)
                 pulse_start = current_sample
@@ -158,11 +165,13 @@ class SequenceWaveformBuilder:
 
                 # Digital end marker
                 end_marker_start = pulse_end
-                end_marker_end = min(end_marker_start + digital_width_samples, total_samples)
+                end_marker_end = min(
+                    end_marker_start + digital_width_samples, total_samples
+                )
                 ch2_raw[end_marker_start:end_marker_end] = 0xFFFF
                 digital_pulse_count += 1
 
-            elif item['type'] == 'laser':
+            elif item["type"] == "laser":
                 pass
 
         analog_pulse_count = np.count_nonzero(ch1_raw > 0)
@@ -202,25 +211,25 @@ class SequenceWaveformBuilder:
         while i < len(tokens):
             token = tokens[i]
 
-            if token in ['|', '1', '0']:
+            if token in ["|", "1", "0"]:
                 i += 1
                 continue
 
-            if token == 'D':
-                sequence.append({'type': 'detection'})
+            if token == "D":
+                sequence.append({"type": "detection"})
                 i += 1
 
-            elif token == 'L':
-                sequence.append({'type': 'laser'})
+            elif token == "L":
+                sequence.append({"type": "laser"})
                 i += 1
 
             elif self._is_number(token):
-                value = float(token.rstrip('!'))
+                value = float(token.rstrip("!"))
 
-                if token.endswith('!'):
-                    sequence.append({'type': 'intensity', 'value': value})
+                if token.endswith("!"):
+                    sequence.append({"type": "intensity", "value": value})
                 else:
-                    sequence.append({'type': 'delay', 'value': value})
+                    sequence.append({"type": "delay", "value": value})
                 i += 1
             else:
                 i += 1
@@ -241,9 +250,9 @@ class SequenceWaveformBuilder:
         """
         total_ms = 0.0
         for item in sequence:
-            if item['type'] == 'delay':
-                total_ms += item['value']
-            elif item['type'] == 'detection':
+            if item["type"] == "delay":
+                total_ms += item["value"]
+            elif item["type"] == "detection":
                 total_ms += self.analog_pulse_width * 1000.0
 
         return total_ms
@@ -259,12 +268,14 @@ class SequenceWaveformBuilder:
             ``True`` if ``float(s.rstrip('!'))`` succeeds, ``False`` otherwise.
         """
         try:
-            float(s.rstrip('!'))
+            float(s.rstrip("!"))
             return True
         except ValueError:
             return False
 
-    def plot_three_channels(self, interleaved: np.ndarray, total_samples: int, rate: float) -> None:
+    def plot_three_channels(
+        self, interleaved: np.ndarray, total_samples: int, rate: float
+    ) -> None:
         """Open a matplotlib window showing the three output channels.
 
         De-interleaves *interleaved* and plots ch0 (actinic), ch1 (analog
@@ -326,8 +337,8 @@ class SequencePreviewBuilder:
         digital_pulse_width (float): Digital marker duration in seconds (10 µs).
     """
 
-    PREVIEW_RATE        = 5000.0   # Hz — low enough to be fast, high enough to see pulses
-    analog_pulse_width  = 20e-6    # seconds — matches SequenceWaveformBuilder
+    PREVIEW_RATE = 5000.0  # Hz — low enough to be fast, high enough to see pulses
+    analog_pulse_width = 20e-6  # seconds — matches SequenceWaveformBuilder
     digital_pulse_width = 10e-6
 
     def build(self, decoded_sequence: list) -> dict:
@@ -354,58 +365,115 @@ class SequencePreviewBuilder:
             All three lists have the same length.  An empty dict with empty
             lists is returned when the total sequence duration is zero.
         """
-        parsed   = self._parse_sequence(decoded_sequence)
+        parsed = self._parse_sequence(decoded_sequence)
         total_ms = self._calculate_total_time(parsed)
 
         if total_ms <= 0:
-            return {'time_ms': [], 'actinic': [], 'pulses': []}
+            return {"time_ms": [], "actinic": [], "pulses": []}
 
         # Add a tail so the last event doesn't get clipped at the plot edge
         total_ms += max(20.0, total_ms * 0.05)
 
-        rate          = self.PREVIEW_RATE
+        rate = self.PREVIEW_RATE
         total_samples = max(1, int(np.ceil(total_ms * rate / 1000.0)))
         pulse_samples = max(1, int(rate * self.analog_pulse_width))
 
         actinic = np.zeros(total_samples, dtype=float)
-        pulses  = np.zeros(total_samples, dtype=float)
+        pulses = np.zeros(total_samples, dtype=float)
 
-        current_sample  = 0
+        current_sample = 0
         current_actinic = 0.0
 
         for item in parsed:
-            if item['type'] == 'intensity':
-                current_actinic = item['value']
+            if item["type"] == "intensity":
+                current_actinic = item["value"]
                 actinic[current_sample:] = current_actinic
 
-            elif item['type'] == 'delay':
+            elif item["type"] == "delay":
                 current_sample = min(
-                    current_sample + int(item['value'] * rate / 1000.0),
+                    current_sample + int(item["value"] * rate / 1000.0),
                     total_samples - 1,
                 )
 
-            elif item['type'] == 'detection':
+            elif item["type"] == "detection":
                 end = min(current_sample + pulse_samples, total_samples)
                 pulses[current_sample:end] = 100.0
 
         time_ms = (np.arange(total_samples) / rate * 1000.0).tolist()
         return {
-            'time_ms': time_ms,
-            'actinic': actinic.tolist(),
-            'pulses':  pulses.tolist(),
+            "time_ms": time_ms,
+            "actinic": actinic.tolist(),
+            "pulses": pulses.tolist(),
         }
 
     # Reuse the stateless parsing helpers from SequenceWaveformBuilder directly
-    _parse_sequence       = SequenceWaveformBuilder._parse_sequence
+    _parse_sequence = SequenceWaveformBuilder._parse_sequence
     _calculate_total_time = SequenceWaveformBuilder._calculate_total_time
-    _is_number            = staticmethod(SequenceWaveformBuilder._is_number)
+    _is_number = staticmethod(SequenceWaveformBuilder._is_number)
 
 
 # Example usage
 if __name__ == "__main__":
     builder = SequenceWaveformBuilder(board_num=0, rate=100000)
 
-    sequence_str = ['1', '|', '0', '|', '100.0', 'D', '100.0', 'D', '100.0', 'D', '100.0', 'D', '100!', '20.0', 'A', '0!', '0.3', 'D', '1.0', 'D', '2.0', 'D', '5.0', 'D', '5.0', 'D', '5.0', 'D', '5.0', 'D', '5.0', 'D', '10.0', 'D', '10.0', 'D', '10.0', 'D', '10.0', 'D', '10.0', 'D', '20.0', 'D', '20.0', 'D', '20.0', 'D', '20.0', 'D', '20.0', 'D', '100.0', 'D', '100.0', 'D']
+    sequence_str = [
+        "1",
+        "|",
+        "0",
+        "|",
+        "100.0",
+        "D",
+        "100.0",
+        "D",
+        "100.0",
+        "D",
+        "100.0",
+        "D",
+        "100!",
+        "20.0",
+        "A",
+        "0!",
+        "0.3",
+        "D",
+        "1.0",
+        "D",
+        "2.0",
+        "D",
+        "5.0",
+        "D",
+        "5.0",
+        "D",
+        "5.0",
+        "D",
+        "5.0",
+        "D",
+        "5.0",
+        "D",
+        "10.0",
+        "D",
+        "10.0",
+        "D",
+        "10.0",
+        "D",
+        "10.0",
+        "D",
+        "10.0",
+        "D",
+        "20.0",
+        "D",
+        "20.0",
+        "D",
+        "20.0",
+        "D",
+        "20.0",
+        "D",
+        "20.0",
+        "D",
+        "100.0",
+        "D",
+        "100.0",
+        "D",
+    ]
 
     waveform, total_samples, digital_count = builder.build(sequence_str)
 

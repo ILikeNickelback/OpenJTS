@@ -12,8 +12,7 @@ class Home_win(WindowBase):
     - Experiment list: one row per experiment, populated from app_state
     """
 
-    def __init__(self, label="Home", uuid=None, visible=True,
-                 state=None, bus=None):
+    def __init__(self, label="Home", uuid=None, visible=True, state=None, bus=None):
         super().__init__(label=label, uuid=uuid, visible=visible)
 
         self._persistent_fields = ["label"]
@@ -39,7 +38,6 @@ class Home_win(WindowBase):
         u = self._t
 
         with dpg.child_window(autosize_x=True, autosize_y=True, border=False):
-
             # ── Device status ────────────────────────────────────────────
             dpg.add_text("Device connections")
             dpg.add_separator()
@@ -52,14 +50,12 @@ class Home_win(WindowBase):
                 with dpg.table_row():
                     dpg.add_text("ADC")
                     dpg.add_text("---", tag=f"{u}_adc_status")
-                    dpg.add_button(label="Retry", width=70,
-                                   callback=self._retry_adc)
+                    dpg.add_button(label="Retry", width=70, callback=self._retry_adc)
 
                 with dpg.table_row():
                     dpg.add_text("ESP32")
                     dpg.add_text("---", tag=f"{u}_esp32_status")
-                    dpg.add_button(label="Retry", width=70,
-                                   callback=self._retry_esp32)
+                    dpg.add_button(label="Retry", width=70, callback=self._retry_esp32)
 
             dpg.add_spacer(height=8)
             dpg.add_separator()
@@ -82,10 +78,14 @@ class Home_win(WindowBase):
 
     def refresh_status(self):
         u = self._t
-        adc_ok   = self._check_device(self.state.get_adc_instance()   if self.state else None)
-        esp32_ok = self._check_device(self.state.get_esp32_instance()  if self.state else None)
-        self._set_status_badge(f"{u}_adc_status",   adc_ok)
-        self._set_status_badge(f"{u}_esp32_status",  esp32_ok)
+        adc_ok = self._check_device(
+            self.state.get_adc_instance() if self.state else None
+        )
+        esp32_ok = self._check_device(
+            self.state.get_esp32_instance() if self.state else None
+        )
+        self._set_status_badge(f"{u}_adc_status", adc_ok)
+        self._set_status_badge(f"{u}_esp32_status", esp32_ok)
 
     def _retry_adc(self):
         self.refresh_status()
@@ -117,18 +117,29 @@ class Home_win(WindowBase):
 
         experiments = self.state.get_experiments() if self.state else []
 
-        with dpg.table(tag=table_tag, parent=container,
-                       header_row=True,
-                       borders_outerH=True, borders_outerV=True,
-                       borders_innerH=True, borders_innerV=True,
-                       row_background=True):
-            dpg.add_table_column(label="Name",      width_fixed=True,  init_width_or_weight=130)
-            dpg.add_table_column(label="Fluo/Spec", width_fixed=True,  init_width_or_weight=80)
-            dpg.add_table_column(label="Seq/Freq",  width_fixed=True,  init_width_or_weight=80)
-            dpg.add_table_column(label="Operator",  width_stretch=True)
-            dpg.add_table_column(label="Project",   width_stretch=True)
+        with dpg.table(
+            tag=table_tag,
+            parent=container,
+            header_row=True,
+            borders_outerH=True,
+            borders_outerV=True,
+            borders_innerH=True,
+            borders_innerV=True,
+            row_background=True,
+        ):
+            dpg.add_table_column(
+                label="Name", width_fixed=True, init_width_or_weight=130
+            )
+            dpg.add_table_column(
+                label="Fluo/Spec", width_fixed=True, init_width_or_weight=80
+            )
+            dpg.add_table_column(
+                label="Seq/Freq", width_fixed=True, init_width_or_weight=80
+            )
+            dpg.add_table_column(label="Operator", width_stretch=True)
+            dpg.add_table_column(label="Project", width_stretch=True)
             dpg.add_table_column(label="Sample ID", width_stretch=True)
-            dpg.add_table_column(label="Date",      width_stretch=True)
+            dpg.add_table_column(label="Date", width_stretch=True)
 
             for exp in experiments:
                 with dpg.table_row():

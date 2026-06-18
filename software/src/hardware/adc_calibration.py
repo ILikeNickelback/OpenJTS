@@ -77,11 +77,15 @@ class CalibrationAcquisitionADC(ADCBase):
 
         rate = config["ADC"]["sampling_rate"]
         builder = CalibrationWaveformBuilder(self.board_num, rate)
-        interleaved, total_waveform_samples, _ = builder.build(calibration_config, intensity=intensity)
+        interleaved, total_waveform_samples, _ = builder.build(
+            calibration_config, intensity=intensity
+        )
 
         self._alloc_waveform_buffer_16(len(interleaved))
         if self._c_waveform_array is not None:
-            arr_view = np.ctypeslib.as_array(self._c_waveform_array, shape=(len(interleaved),))
+            arr_view = np.ctypeslib.as_array(
+                self._c_waveform_array, shape=(len(interleaved),)
+            )
             arr_view[:] = interleaved
 
         ao_range = self.dev_info.get_ao_info().supported_ranges[0]
@@ -99,8 +103,9 @@ class CalibrationAcquisitionADC(ADCBase):
 
     def stop_calibration_using_adc(self) -> None:
         """Stop the AO/digital output scan."""
-        ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
-
+        ul.stop_background(
+            board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
+        )
 
     def update_detection_intensity(self, intensity: float) -> None:
         """Restart the AO output scan at a new detection LED intensity.
@@ -112,7 +117,9 @@ class CalibrationAcquisitionADC(ADCBase):
             intensity: New detection LED intensity as a percentage (0–100).
         """
         try:
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
+            )
         except Exception:
             pass
         self.start_calibration_using_adc(intensity=intensity)
@@ -125,8 +132,12 @@ class CalibrationAcquisitionADC(ADCBase):
         memory is never leaked even if a stop call raises.
         """
         try:
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.AIFUNCTION)
-            ul.stop_background(board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION)
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.AIFUNCTION
+            )
+            ul.stop_background(
+                board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
+            )
         finally:
             self._free_acq_buffer()
             self._free_waveform_buffer()
