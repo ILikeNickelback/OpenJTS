@@ -39,6 +39,7 @@ class SequenceAcquisitionWorker(AcquisitionBaseWorker):
         """Build a millisecond timestamp list by walking the sequence token stream.
 
         Tokens are interpreted as:
+
         - ``'D'``: a detection point — records the current time and advances by
           one analog pulse width (20 µs).
         - numeric string (no ``!`` suffix): a delay in milliseconds.

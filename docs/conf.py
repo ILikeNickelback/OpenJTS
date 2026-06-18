@@ -19,6 +19,19 @@ extensions = [
 
 autosummary_generate = True
 
+# Without this, automodule only lists each function/class as a one-line
+# summary; this makes every module page render the full docstring body.
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+}
+
+# Without this, Napoleon renders Google-style "Attributes:" sections as
+# .. attribute:: directives, which duplicate the same name already picked
+# up by autodoc's introspection of the real class attribute.
+napoleon_use_ivar = True
+
 # Hardware/GUI dependencies that can't (or shouldn't) be installed on the doc
 # build server: mcculw needs the native MCC driver, dearpygui needs a display/GL,
 # tkinter needs a system Tk build. Sphinx mocks them so autodoc can still import
