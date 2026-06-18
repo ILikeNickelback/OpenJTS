@@ -1,10 +1,29 @@
+import os
+import sys
+
+# software/src is added directly (not "software") because the application's
+# own modules import each other as top-level packages, e.g. "from core.event_bus
+# import EventBus" — autodoc needs that same layout on sys.path to resolve them.
+sys.path.insert(0, os.path.abspath("../software/src"))
+
 project = "OpenJTS"
-copyright = "2026, OpenJTS contributors"
-author = "OpenJTS contributors"
+copyright = "2026, Christopher LARRAN"
+author = "Christopher LARRAN"
 
 extensions = [
     "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
 ]
+
+autosummary_generate = True
+
+# Hardware/GUI dependencies that can't (or shouldn't) be installed on the doc
+# build server: mcculw needs the native MCC driver, dearpygui needs a display/GL,
+# tkinter needs a system Tk build. Sphinx mocks them so autodoc can still import
+# and document everything else that depends on them.
+autodoc_mock_imports = ["mcculw", "dearpygui", "tkinter"]
 
 source_suffix = {
     ".rst": "restructuredtext",

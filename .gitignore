@@ -9,3 +9,7 @@ __pycache__/
 
 # Ruff linter cache
 .ruff_cache/
+
+# Sphinx: autosummary stubs and build output are regenerated each build
+docs/api/
+docs/_build/
