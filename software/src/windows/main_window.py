@@ -41,12 +41,12 @@ class Main_win:
     """
     Primary application window.
 
-    Layout
-    ------
-    dpg.window  (primary window, fills viewport)
-    └── menu_bar
-    └── child_window  "main_body"   (fills remaining space below menu bar)
-        └── TabbedWindowManager     (tab bar + tab content fills this child)
+    Layout::
+
+        dpg.window  (primary window, fills viewport)
+        └── menu_bar
+        └── child_window  "main_body"   (fills remaining space below menu bar)
+            └── TabbedWindowManager     (tab bar + tab content fills this child)
     """
 
     def __init__(self):

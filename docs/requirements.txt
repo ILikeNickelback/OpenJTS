@@ -1,6 +1,6 @@
 sphinx
 myst-parser
-sphinx-rtd-theme
+pydata-sphinx-theme
 numpy
 matplotlib
 loguru

@@ -43,4 +43,4 @@ source_suffix = {
     ".md": "markdown",
 }
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"

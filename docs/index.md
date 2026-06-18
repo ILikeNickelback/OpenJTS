@@ -5,5 +5,7 @@ Open-source instrument control software for a JTS (Joliot-type Spectrophotometer
 ```{toctree}
 :maxdepth: 2
 
+hardware
+firmware
 api
 ```
