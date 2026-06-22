@@ -1,0 +1,6 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+"ACTINIC_2, ACTINIC, DETECTION_2, DETECTION, PHOTODIODE_2, PHOTODIODE",DSUB-9_Pins_Vertical_P2.77x2.84mm_MountingHoles,6,DE9_Pins_MountingHoles,
+"C1, C2",CP_Radial_D10.0mm_P5.00mm,2,C,
+"D1, D2, D3",LED_D5.0mm,3,LED,
+J1,Molex_KK-396_5273-08A_1x08_P3.96mm_Vertical,1,Conn_01x08_Pin,
+"R1, R2, R3, R4, R5",R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal,5,R,

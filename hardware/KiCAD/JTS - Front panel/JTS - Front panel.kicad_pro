@@ -53,7 +53,13 @@
           "min_clearance": 0.5
         }
       },
-      "diff_pair_dimensions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
       "drc_exclusions": [],
       "meta": {
         "version": 2
@@ -137,10 +143,10 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.2,
+        "min_track_width": 0.6,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
-        "solder_mask_to_copper_clearance": 0.0,
+        "solder_mask_to_copper_clearance": 0.005,
         "use_height_for_length_calcs": true
       },
       "teardrop_options": [
@@ -187,7 +193,9 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
+      "track_widths": [
+        0.0
+      ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
           "corner_radius_percentage": 80,
@@ -214,7 +222,12 @@
           "spacing": 0.6
         }
       },
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "ipc2581": {
@@ -472,7 +485,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "ESP32_controler.kicad_pro",
+    "filename": "JTS - Front panel.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -549,6 +562,12 @@
         },
         {
           "group_by": true,
+          "label": "Footprint",
+          "name": "Footprint",
+          "show": true
+        },
+        {
+          "group_by": true,
           "label": "Value",
           "name": "Value",
           "show": true
@@ -569,12 +588,6 @@
           "group_by": true,
           "label": "Exclude from Board",
           "name": "${EXCLUDE_FROM_BOARD}",
-          "show": true
-        },
-        {
-          "group_by": true,
-          "label": "Footprint",
-          "name": "Footprint",
           "show": true
         },
         {
@@ -637,11 +650,22 @@
     "reuse_designators": true,
     "subpart_first_id": 65,
     "subpart_id_separator": 0,
-    "top_level_sheets": [],
-    "used_designators": "R1-9,J1-6,Q1-3,Laser\\-A1,+15V1,+48V1,Laser\\-B1,H1-2",
+    "top_level_sheets": [
+      {
+        "filename": "JTS - Front panel.kicad_sch",
+        "name": "Racine",
+        "uuid": "bcb9d0c1-aa8b-4270-a673-383824882780"
+      }
+    ],
+    "used_designators": "C3",
     "variants": []
   },
-  "sheets": [],
+  "sheets": [
+    [
+      "bcb9d0c1-aa8b-4270-a673-383824882780",
+      "Racine"
+    ]
+  ],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {

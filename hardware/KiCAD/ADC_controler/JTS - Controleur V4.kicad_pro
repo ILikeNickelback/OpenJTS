@@ -53,7 +53,13 @@
           "min_clearance": 0.5
         }
       },
-      "diff_pair_dimensions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
       "drc_exclusions": [],
       "meta": {
         "version": 2
@@ -137,10 +143,10 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.2,
+        "min_track_width": 0.4,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
-        "solder_mask_to_copper_clearance": 0.0,
+        "solder_mask_to_copper_clearance": 0.005,
         "use_height_for_length_calcs": true
       },
       "teardrop_options": [
@@ -187,7 +193,10 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
+      "track_widths": [
+        0.0,
+        0.8
+      ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
           "corner_radius_percentage": 80,
@@ -214,7 +223,12 @@
           "spacing": 0.6
         }
       },
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "ipc2581": {
@@ -433,6 +447,7 @@
       "footprint_filter": "ignore",
       "footprint_link_issues": "warning",
       "four_way_junction": "ignore",
+      "global_label_dangling": "warning",
       "ground_pin_not_ground": "warning",
       "hier_label_mismatch": "error",
       "isolated_pin_label": "warning",
@@ -472,7 +487,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "ESP32_controler.kicad_pro",
+    "filename": "JTS - Controleur V4.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -506,10 +521,14 @@
   },
   "pcbnew": {
     "last_paths": {
+      "gencad": "",
       "idf": "",
       "netlist": "",
       "plot": "",
+      "pos_files": "",
       "specctra_dsn": "",
+      "step": "",
+      "svg": "",
       "vrml": ""
     },
     "page_layout_descr_file": ""
@@ -549,6 +568,12 @@
         },
         {
           "group_by": true,
+          "label": "Footprint",
+          "name": "Footprint",
+          "show": true
+        },
+        {
+          "group_by": true,
           "label": "Value",
           "name": "Value",
           "show": true
@@ -569,12 +594,6 @@
           "group_by": true,
           "label": "Exclude from Board",
           "name": "${EXCLUDE_FROM_BOARD}",
-          "show": true
-        },
-        {
-          "group_by": true,
-          "label": "Footprint",
-          "name": "Footprint",
           "show": true
         },
         {
@@ -600,8 +619,8 @@
       "group_symbols": true,
       "include_excluded_from_bom": true,
       "name": "",
-      "sort_asc": true,
-      "sort_field": "Reference"
+      "sort_asc": false,
+      "sort_field": "${EXCLUDE_FROM_BOARD}"
     },
     "bus_aliases": {},
     "connection_grid_size": 50.0,
@@ -632,16 +651,35 @@
     "meta": {
       "version": 1
     },
+    "net_format_name": "",
     "page_layout_descr_file": "",
     "plot_directory": "",
     "reuse_designators": true,
+    "space_save_all_events": true,
+    "spice_current_sheet_as_root": false,
+    "spice_external_command": "spice \"%I\"",
+    "spice_model_current_sheet_as_root": true,
+    "spice_save_all_currents": false,
+    "spice_save_all_dissipations": false,
+    "spice_save_all_voltages": false,
     "subpart_first_id": 65,
     "subpart_id_separator": 0,
-    "top_level_sheets": [],
-    "used_designators": "R1-9,J1-6,Q1-3,Laser\\-A1,+15V1,+48V1,Laser\\-B1,H1-2",
+    "top_level_sheets": [
+      {
+        "filename": "JTS - Controleur V4.kicad_sch",
+        "name": "JTS - Controleur V4",
+        "uuid": "51f978ac-dc04-4ff2-add3-a4feccef0ee6"
+      }
+    ],
+    "used_designators": "",
     "variants": []
   },
-  "sheets": [],
+  "sheets": [
+    [
+      "51f978ac-dc04-4ff2-add3-a4feccef0ee6",
+      "JTS - Controleur V4"
+    ]
+  ],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {
