@@ -55,6 +55,8 @@ class Sequence_input_window(WindowBase):
 
         if bus:
             bus.subscribe("add_sequence_from_library", self._on_add_from_library)
+            bus.subscribe("add_sequences_from_library", self._on_add_many_from_library)
+            bus.subscribe("request_current_sequence", self._on_request_current)
 
     # ----------------------------------------------------------
     # UI BUILDING
@@ -188,9 +190,24 @@ class Sequence_input_window(WindowBase):
 
     def _on_add_from_library(self, str_sequence: str = "", **_):
         """Add a new sequence row pre-filled with the library entry."""
+        self._append_sequence(str_sequence)
+
+    def _on_add_many_from_library(self, str_sequences=None, **_):
+        """Add one new row per sequence in a saved protocol, in order."""
+        for str_sequence in str_sequences or []:
+            self._append_sequence(str_sequence)
+
+    def _append_sequence(self, str_sequence: str):
         self.add_sequence()
         last_n = self._active_ns[-1]
         dpg.set_value(f"seq_input_{self.UUID}_{last_n}", str_sequence)
+
+    def _on_request_current(self, **_):
+        """Answer request_current_sequence with every active sequence string."""
+        if self.bus:
+            self.bus.publish(
+                "current_sequence_data", str_sequences=self.get_sequence_strings()
+            )
 
     def _relabel_all(self):
         """Update every sequence label to reflect its current position (1 to n)."""

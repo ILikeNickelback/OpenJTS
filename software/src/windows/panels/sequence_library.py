@@ -68,10 +68,15 @@ class SequenceLibraryWindow(WindowBase):
         self._file_data = _load_file()
         self._seq_control = sequence_control()
 
+        # Populated synchronously by the active input window in response to
+        # "request_current_sequence", consumed right after publish() returns.
+        self._pending_save_data = None
+
         self._buildui()
 
         if bus:
             bus.subscribe("experiment_added", self._on_mode_changed)
+            bus.subscribe("current_sequence_data", self._on_current_sequence_data)
 
     # ------------------------------------------------------------------
     # Mode helpers
@@ -157,6 +162,7 @@ class SequenceLibraryWindow(WindowBase):
                 )
 
         self._build_modal()
+        self._build_save_modal()
 
     def _populate_table(self):
         table = self._t("table")
@@ -185,20 +191,52 @@ class SequenceLibraryWindow(WindowBase):
                     label="View", width=-1, callback=self._visualize_cb, user_data=idx
                 )
                 dpg.add_button(
-                    label="+ Add", width=-1, callback=self._add_cb, user_data=idx
+                    label=self._add_label(entry),
+                    width=-1,
+                    callback=self._add_cb,
+                    user_data=idx,
                 )
 
+    def _add_label(self, entry: dict) -> str:
+        count = len(entry.get("str_sequences") or entry.get("frequency_configs") or [])
+        return f"+ Add x{count}" if count else "+ Add"
+
     def _entry_preview(self, entry: dict) -> str:
-        """One-line summary shown in the table."""
+        """One-line (or multi-line, for protocols) summary shown in the table."""
+        if "str_sequences" in entry:
+            return "\n".join(
+                f"{i + 1}. {s}" for i, s in enumerate(entry["str_sequences"])
+            )
         if "str_sequence" in entry:
             return entry["str_sequence"]
-        cfg = entry.get("frequency_config", {})
+        if "frequency_configs" in entry:
+            return "\n".join(
+                f"{i + 1}. {self._frequency_summary(cfg)}"
+                for i, cfg in enumerate(entry["frequency_configs"])
+            )
+        return self._frequency_summary(entry.get("frequency_config", {}))
+
+    def _frequency_summary(self, cfg: dict) -> str:
         return (
             f"{cfg.get('frequency', '?')} Hz  "
             f"amp={cfg.get('amplitude', '?')}%  "
             f"offset={cfg.get('offset', '?')}%  "
             f"periods={cfg.get('nbr_of_periods', '?')}"
         )
+
+    def _first_sequence(self, entry: dict) -> str:
+        """First sequence string of a single or bundled (protocol) entry."""
+        if "str_sequences" in entry:
+            seqs = entry["str_sequences"]
+            return seqs[0] if seqs else ""
+        return entry.get("str_sequence", "")
+
+    def _first_frequency_config(self, entry: dict) -> dict:
+        """First frequency config of a single or bundled (protocol) entry."""
+        if "frequency_configs" in entry:
+            cfgs = entry["frequency_configs"]
+            return cfgs[0] if cfgs else {}
+        return entry.get("frequency_config", {})
 
     # ------------------------------------------------------------------
     # Actions
@@ -215,11 +253,13 @@ class SequenceLibraryWindow(WindowBase):
             return
         entry = entries[idx]
 
+        # For a protocol (multiple bundled sequences/configs) only the first
+        # one is previewed — the plot has no notion of "N back to back".
         if self._is_frequency():
-            cfg = entry.get("frequency_config", {})
+            cfg = self._first_frequency_config(entry)
             preview = self._build_frequency_preview(cfg)
         else:
-            str_seq = entry.get("str_sequence", "")
+            str_seq = self._first_sequence(entry)
             if not str_seq.strip():
                 return
             decoded, _ = self._seq_control.decode_sequence(str_seq)
@@ -235,9 +275,21 @@ class SequenceLibraryWindow(WindowBase):
         entry = entries[idx]
 
         if self._is_frequency():
+            if "frequency_configs" in entry:
+                if self.bus:
+                    self.bus.publish(
+                        "add_frequencies_from_library",
+                        frequency_configs=entry["frequency_configs"],
+                    )
+                return
             cfg = entry.get("frequency_config", {})
             if self.bus:
                 self.bus.publish("add_frequency_from_library", frequency_config=cfg)
+        elif "str_sequences" in entry:
+            if self.bus:
+                self.bus.publish(
+                    "add_sequences_from_library", str_sequences=entry["str_sequences"]
+                )
         else:
             str_seq = entry.get("str_sequence", "")
             if self.bus:
@@ -248,8 +300,62 @@ class SequenceLibraryWindow(WindowBase):
         self._populate_table()
 
     def _save_current(self, *_):
+        """Ask the active input window for everything it currently holds.
+
+        ``request_current_sequence`` is answered synchronously by whichever
+        of Sequence_input_window / Frequency_input_window is alive in this
+        tab, via ``_on_current_sequence_data``. If it has more than one
+        active row, the result is saved as a single bundled "protocol"
+        entry (e.g. 10 sequences saved together as "Phi PS2 protocol").
+        """
+        self._pending_save_data = None
         if self.bus:
             self.bus.publish("request_current_sequence")
+        if not self._pending_save_data:
+            return
+        self._open_save_modal()
+
+    def _on_current_sequence_data(
+        self, str_sequences=None, frequency_configs=None, **_
+    ):
+        if str_sequences is not None:
+            non_empty = [s for s in str_sequences if s.strip()]
+            if non_empty:
+                self._pending_save_data = {"str_sequences": non_empty}
+        elif frequency_configs is not None:
+            if frequency_configs:
+                self._pending_save_data = {"frequency_configs": frequency_configs}
+
+    def _open_save_modal(self):
+        vw = dpg.get_viewport_client_width()
+        vh = dpg.get_viewport_client_height()
+        dpg.set_item_pos(self._t("save_modal"), [vw // 2 - 210, vh // 2 - 60])
+        dpg.set_value(self._t("save_name"), "")
+        dpg.show_item(self._t("save_modal"))
+
+    def _confirm_save(self, *_):
+        name = dpg.get_value(self._t("save_name")).strip()
+        if not name or not self._pending_save_data:
+            return
+        key = self._section_key()
+        entry = {"name": name}
+
+        if "str_sequences" in self._pending_save_data:
+            seqs = self._pending_save_data["str_sequences"]
+            entry["str_sequence" if len(seqs) == 1 else "str_sequences"] = (
+                seqs[0] if len(seqs) == 1 else seqs
+            )
+        else:
+            cfgs = self._pending_save_data["frequency_configs"]
+            entry["frequency_config" if len(cfgs) == 1 else "frequency_configs"] = (
+                cfgs[0] if len(cfgs) == 1 else cfgs
+            )
+
+        self._file_data[key].append(entry)
+        _save_file(self._file_data)
+        self._populate_table()
+        dpg.hide_item(self._t("save_modal"))
+        self._pending_save_data = None
 
     def _on_mode_changed(self, **_):
         self._populate_table()
@@ -342,3 +448,31 @@ class SequenceLibraryWindow(WindowBase):
         _save_file(self._file_data)
         self._populate_table()
         dpg.hide_item(self._t("modal"))
+
+    # ------------------------------------------------------------------
+    # "Save current" name modal — shown after a successful
+    # request_current_sequence round trip (see _save_current).
+    # ------------------------------------------------------------------
+    def _build_save_modal(self):
+        modal_tag = self._t("save_modal")
+        with dpg.window(
+            tag=modal_tag,
+            label="Save current as…",
+            modal=True,
+            show=False,
+            no_resize=True,
+            width=420,
+            height=130,
+        ):
+            dpg.add_text("Name:")
+            dpg.add_input_text(
+                tag=self._t("save_name"), hint="e.g. Phi PS2 protocol", width=-1
+            )
+            dpg.add_spacer(height=6)
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Save", width=100, callback=self._confirm_save)
+                dpg.add_button(
+                    label="Cancel",
+                    width=100,
+                    callback=lambda: dpg.hide_item(self._t("save_modal")),
+                )
