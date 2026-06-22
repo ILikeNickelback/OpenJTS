@@ -6,7 +6,28 @@
         },
         {
             "name": "Phi PSII",
-            "str_sequence":  "10(500msD)\n\nA[0]\n4(25msA[0]300\u00b5sD50usA[0])\n2(50msA[0]300\u00b5sD50usA[0])\n3(100msA[0]300\u00b5sD50usA[0])\n60(500msA[0]300\u00b5sD50usA[0])\n\nA[100]150msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD\n4(25msD)\n4(100msD)\n10(500msD)"
+            "str_sequence": "10(500msD)\n\nA[0]\n4(25msA[0]300µsD50usA[0])\n2(50msA[0]300µsD50usA[0])\n3(100msA[0]300µsD50usA[0])\n60(500msA[0]300µsD50usA[0])\n\nA[100]150msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD50usA[100]50msA[0]\n300usD\n4(25msD)\n4(100msD)\n10(500msD)"
+        },
+        {
+            "name": "test",
+            "str_sequences": [
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[100]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)"
+            ]
+        },
+        {
+            "name": "test2",
+            "str_sequences": [
+                "4(100msD)A[10]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[20]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[30]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[40]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
+                "4(100msD)A[50]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)"
+            ]
         }
     ],
     "Sequence_Spectro": [

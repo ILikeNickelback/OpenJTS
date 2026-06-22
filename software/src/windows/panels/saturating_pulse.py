@@ -5,13 +5,14 @@ from core.window_base import WindowBase
 
 class SaturatingPulseWindow(WindowBase):
     """
-    Floating modal editor for per-period saturating pulse overrides.
+    Editor for per-period saturating pulse overrides.
 
     Each row defines a pulse inserted at a specific period of the actinic
     waveform: period number, phase (°), duration (ms), and amplitude
-    (0–100). Call gather_data() to consolidate the rows into
-    saturating_pulse_data before reading the config. One instance is
-    created per frequency slot in Frequency_input_window.
+    (0–100). saturating_pulse_data is computed live from the current rows
+    whenever it is read. One instance is created per frequency slot in
+    Frequency_input_window, embedded directly under that slot's
+    wave/detection settings.
     """
 
     def __init__(
@@ -22,6 +23,8 @@ class SaturatingPulseWindow(WindowBase):
         pos=(0, 0),
         uuid=None,
         visible=False,
+        embedded=False,
+        parent=None,
     ):
         super().__init__(
             label=label,
@@ -32,9 +35,10 @@ class SaturatingPulseWindow(WindowBase):
             visible=visible,
         )
 
+        self.embedded = embedded
+        self.parent = parent
         self.row_counter = 0
         self.rows = []
-        self.saturating_pulse_data = {}
 
         self._buildui()
 
@@ -42,27 +46,34 @@ class SaturatingPulseWindow(WindowBase):
         dpg.show_item(self.winID)
 
     def _buildui(self):
-        with dpg.window(
-            label=self.label,
-            pos=self.pos,
-            width=self.win_width,
-            height=self.win_height,
-            tag=self.winID,
-            show=self.visible,
-        ):
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Add row", callback=self.add_row)
-                dpg.add_button(label="Gather Data", callback=self.gather_data)
+        if self.embedded:
+            with dpg.group(tag=self.winID, parent=self.parent):
+                self._build_contents()
+        else:
+            with dpg.window(
+                label=self.label,
+                pos=self.pos,
+                width=self.win_width,
+                height=self.win_height,
+                tag=self.winID,
+                show=self.visible,
+            ):
+                self._build_contents()
+
+    def _build_contents(self):
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Add row", callback=self.add_row)
+            if not self.embedded:
                 dpg.add_button(
                     label="Close", callback=lambda: dpg.hide_item(self.winID)
                 )
 
-            with dpg.table(header_row=True, tag=f"saturating_pulse_table_{self.UUID}"):
-                dpg.add_table_column(label="Period number")
-                dpg.add_table_column(label="Degre (°)")
-                dpg.add_table_column(label="Duration (ms)")
-                dpg.add_table_column(label="Amplitude (0 - 100)")
-                dpg.add_table_column(label="Remove")
+        with dpg.table(header_row=True, tag=f"saturating_pulse_table_{self.UUID}"):
+            dpg.add_table_column(label="Period number")
+            dpg.add_table_column(label="Degre (°)")
+            dpg.add_table_column(label="Duration (ms)")
+            dpg.add_table_column(label="Amplitude (0 - 100)")
+            dpg.add_table_column(label="Remove")
 
     def add_row(self):
         self.row_counter += 1
@@ -120,16 +131,40 @@ class SaturatingPulseWindow(WindowBase):
         dpg.delete_item(row_tag)
         if row_index in self.rows:
             self.rows.remove(row_index)
-        self.saturating_pulse_data.pop(row_index, None)
 
-    def gather_data(self):
-        for row_id in self.rows:
-            self.saturating_pulse_data[row_id] = {
+    @property
+    def saturating_pulse_data(self):
+        return {
+            row_id: {
                 "period_number": dpg.get_value(f"period_number_{self.UUID}_{row_id}"),
                 "degree": dpg.get_value(f"degree_{self.UUID}_{row_id}"),
                 "duration_ms": dpg.get_value(f"duration_{self.UUID}_{row_id}"),
                 "amplitude": dpg.get_value(f"amplitude_{self.UUID}_{row_id}"),
             }
+            for row_id in self.rows
+        }
+
+    @saturating_pulse_data.setter
+    def saturating_pulse_data(self, data):
+        for row_id in list(self.rows):
+            row_tag = f"saturating_pulse_row_{self.UUID}_{row_id}"
+            if dpg.does_item_exist(row_tag):
+                dpg.delete_item(row_tag)
+        self.rows = []
+
+        for values in (data or {}).values():
+            self.add_row()
+            row_id = self.rows[-1]
+            dpg.set_value(
+                f"period_number_{self.UUID}_{row_id}", values.get("period_number", 0)
+            )
+            dpg.set_value(f"degree_{self.UUID}_{row_id}", values.get("degree", 0))
+            dpg.set_value(
+                f"duration_{self.UUID}_{row_id}", values.get("duration_ms", 0)
+            )
+            dpg.set_value(
+                f"amplitude_{self.UUID}_{row_id}", values.get("amplitude", 0)
+            )
 
 
 EXPORTED_CLASS = SaturatingPulseWindow
