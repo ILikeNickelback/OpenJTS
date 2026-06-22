@@ -140,7 +140,7 @@
         "min_track_width": 0.2,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
-        "solder_mask_to_copper_clearance": 0.0,
+        "solder_mask_to_copper_clearance": 0.005,
         "use_height_for_length_calcs": true
       },
       "teardrop_options": [
@@ -637,8 +637,14 @@
     "reuse_designators": true,
     "subpart_first_id": 65,
     "subpart_id_separator": 0,
-    "top_level_sheets": [],
-    "used_designators": "R1-9,J1-6,Q1-3,Laser\\-A1,+15V1,+48V1,Laser\\-B1,H1-2",
+    "top_level_sheets": [
+      {
+        "filename": "ESP32_controler.kicad_sch",
+        "name": "ESP32_controler",
+        "uuid": "00000000-0000-0000-0000-000000000000"
+      }
+    ],
+    "used_designators": "",
     "variants": []
   },
   "sheets": [],
