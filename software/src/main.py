@@ -86,6 +86,7 @@ if __name__ == "__main__":
     main_window.setup(app_state, bus, get_experiment_tabs, restore_workspace)
 
     while dpg.is_dearpygui_running():
+        main_window.log_window.poll()
         dpg.render_dearpygui_frame()
 
     for tab in get_experiment_tabs().values():

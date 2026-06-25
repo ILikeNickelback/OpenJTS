@@ -4,6 +4,7 @@ from tkinter import filedialog, simpledialog
 import dearpygui.dearpygui as dpg
 from core.tabbed_window_manager import TabbedWindowManager
 import core.workspace_manager as workspace_manager
+from windows.log_window import LogWindow
 from pathlib import Path
 
 
@@ -60,6 +61,8 @@ class Main_win:
 
         self._workspace_dir: Path | None = None  # set after first Save As
 
+        self.log_window = LogWindow()
+
         with dpg.window(tag=self.winID):
             # ── Menu bar ────────────────────────────────────────────────
             with dpg.menu_bar():
@@ -102,6 +105,10 @@ class Main_win:
                     dpg.add_menu_item(
                         label="Show About",
                         callback=lambda: dpg.show_tool(dpg.mvTool_About),
+                    )
+                    dpg.add_menu_item(
+                        label="Show Logs",
+                        callback=lambda: self.log_window.show(),
                     )
 
             with dpg.child_window(

@@ -2389,7 +2389,7 @@
 	)
 	(wire
 		(pts
-			(xy 173.99 50.8) (xy 180.34 50.8)
+			(xy 181.61 50.8) (xy 173.99 50.8)
 		)
 		(stroke
 			(width 0)
@@ -2779,7 +2779,7 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 50.8) (xy 180.34 54.61)
+			(xy 181.61 50.8) (xy 181.61 55.88)
 		)
 		(stroke
 			(width 0)
@@ -4562,7 +4562,7 @@
 	)
 	(symbol
 		(lib_id "power:Earth")
-		(at 180.34 54.61 0)
+		(at 181.61 55.88 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4573,7 +4573,7 @@
 		(fields_autoplaced yes)
 		(uuid "7e0b081b-f5d0-478b-9e0b-dfb508c008b4")
 		(property "Reference" "#PWR05"
-			(at 180.34 60.96 0)
+			(at 181.61 62.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4584,7 +4584,7 @@
 			)
 		)
 		(property "Value" "Earth"
-			(at 180.34 59.69 0)
+			(at 181.61 60.96 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4594,7 +4594,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 180.34 54.61 0)
+			(at 181.61 55.88 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4605,7 +4605,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 180.34 54.61 0)
+			(at 181.61 55.88 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4616,7 +4616,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"Earth\""
-			(at 180.34 54.61 0)
+			(at 181.61 55.88 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
