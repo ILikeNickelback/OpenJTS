@@ -3,7 +3,6 @@ import math
 from pathlib import Path
 
 import dearpygui.dearpygui as dpg
-from loguru import logger
 
 from core.window_base import WindowBase
 from windows.panels.saturating_pulse import SaturatingPulseWindow
@@ -52,7 +51,6 @@ class Frequency_input_window(WindowBase):
             bus.subscribe(
                 "add_frequencies_from_library", self._on_add_many_from_library
             )
-            bus.subscribe("request_current_sequence", self._on_request_current)
             bus.subscribe("load_frequency_configs", self._load_all)
 
     # ------------------------------------------------------------------
@@ -146,14 +144,22 @@ class Frequency_input_window(WindowBase):
             parent=parent,
             visible=True,
         )
+        sat.add_row()
+        sat.add_row()
         self._sat_windows[n] = sat
 
+        dpg.add_spacer(height=8, tag=self._st(n, "sat_btn_spacer"), parent=parent)
+        dpg.add_separator(tag=self._st(n, "sat_btn_sep"), parent=parent)
+        dpg.add_spacer(height=4, tag=self._st(n, "sat_btn_spacer2"), parent=parent)
+
         with dpg.group(horizontal=True, tag=self._st(n, "btn_group"), parent=parent):
-            dpg.add_button(label="+ Add", callback=self._add_slot_cb)
+            dpg.add_button(label="+ Add", callback=self.add_slot)
             dpg.add_button(label="Delete", callback=self._delete_cb, user_data=n)
             dpg.add_button(label="Visualize", callback=self._visualize_cb, user_data=n)
 
         dpg.add_separator(tag=self._st(n, "sep"), parent=parent)
+        dpg.add_separator(tag=self._st(n, "sep"), parent=parent)
+
 
         self._relabel_all()
 
@@ -182,16 +188,10 @@ class Frequency_input_window(WindowBase):
                 )
             dpg.add_text(unit)
 
-    def _add_slot_cb(self, *_):
-        logger.debug("'+ Add' button clicked")
-        self.add_slot()
-
     def _delete_cb(self, _, __, user_data):
-        logger.debug("'Delete' button clicked")
         self.delete_slot(user_data)
 
     def _visualize_cb(self, _, __, user_data):
-        logger.debug("'Visualize' button clicked")
         self._visualize(user_data)
 
     def delete_slot(self, n):
@@ -203,6 +203,9 @@ class Frequency_input_window(WindowBase):
             self._st(n, "row"),
             self._st(n, "sat_spacer"),
             self._st(n, "sat_label"),
+            self._st(n, "sat_btn_spacer"),
+            self._st(n, "sat_btn_sep"),
+            self._st(n, "sat_btn_spacer2"),
             self._st(n, "btn_group"),
             self._st(n, "sep"),
         ]:
@@ -245,13 +248,6 @@ class Frequency_input_window(WindowBase):
             dpg.set_value(self._st(n, "pre"), cfg["pre_detection"])
         if "post_detection" in cfg:
             dpg.set_value(self._st(n, "post"), cfg["post_detection"])
-
-    def _on_request_current(self, **_):
-        """Answer request_current_sequence with every active frequency config."""
-        if self.bus:
-            self.bus.publish(
-                "current_sequence_data", frequency_configs=self.get_frequency_configs()
-            )
 
     # ------------------------------------------------------------------
     # Read config for one slot

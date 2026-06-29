@@ -69,15 +69,10 @@ class SequenceLibraryWindow(WindowBase):
         self._file_data = _load_file()
         self._seq_control = sequence_control()
 
-        # Populated synchronously by the active input window in response to
-        # "request_current_sequence", consumed right after publish() returns.
-        self._pending_save_data = None
-
         self._buildui()
 
         if bus:
             bus.subscribe("experiment_added", self._on_mode_changed)
-            bus.subscribe("current_sequence_data", self._on_current_sequence_data)
 
     # ------------------------------------------------------------------
     # Mode helpers
@@ -149,21 +144,8 @@ class SequenceLibraryWindow(WindowBase):
                     width=90,
                     callback=self._new_entry_modal,
                 )
-                dpg.add_button(
-                    label="Save current",
-                    tag=self._t("btn_save"),
-                    width=110,
-                    callback=self._save_current,
-                )
-                dpg.add_button(
-                    label="Reload",
-                    tag=self._t("btn_reload"),
-                    width=80,
-                    callback=self._reload,
-                )
 
         self._build_modal()
-        self._build_save_modal()
 
     def _populate_table(self):
         table = self._t("table")
@@ -298,75 +280,6 @@ class SequenceLibraryWindow(WindowBase):
             if self.bus:
                 self.bus.publish("add_sequence_from_library", str_sequence=str_seq)
 
-    def _reload(self, *_):
-        logger.debug("'Reload' button clicked")
-        self._file_data = _load_file()
-        self._populate_table()
-
-    def _save_current(self, *_):
-        logger.debug("'Save current' button clicked")
-        """Ask the active input window for everything it currently holds.
-
-        ``request_current_sequence`` is answered synchronously by whichever
-        of Sequence_input_window / Frequency_input_window is alive in this
-        tab, via ``_on_current_sequence_data``. If it has more than one
-        active row, the result is saved as a single bundled "protocol"
-        entry (e.g. 10 sequences saved together as "Phi PS2 protocol").
-        """
-        self._pending_save_data = None
-        if self.bus:
-            self.bus.publish("request_current_sequence")
-        if not self._pending_save_data:
-            return
-        self._open_save_modal()
-
-    def _on_current_sequence_data(
-        self, str_sequences=None, frequency_configs=None, **_
-    ):
-        if str_sequences is not None:
-            non_empty = [s for s in str_sequences if s.strip()]
-            if non_empty:
-                self._pending_save_data = {"str_sequences": non_empty}
-        elif frequency_configs is not None:
-            if frequency_configs:
-                self._pending_save_data = {"frequency_configs": frequency_configs}
-
-    def _open_save_modal(self):
-        vw = dpg.get_viewport_client_width()
-        vh = dpg.get_viewport_client_height()
-        dpg.set_item_pos(self._t("save_modal"), [vw // 2 - 210, vh // 2 - 60])
-        dpg.set_value(self._t("save_name"), "")
-        dpg.show_item(self._t("save_modal"))
-
-    def _cancel_save(self, *_):
-        logger.debug("'Cancel' (save current) button clicked")
-        dpg.hide_item(self._t("save_modal"))
-
-    def _confirm_save(self, *_):
-        logger.debug("'Save' (save current) button clicked")
-        name = dpg.get_value(self._t("save_name")).strip()
-        if not name or not self._pending_save_data:
-            return
-        key = self._section_key()
-        entry = {"name": name}
-
-        if "str_sequences" in self._pending_save_data:
-            seqs = self._pending_save_data["str_sequences"]
-            entry["str_sequence" if len(seqs) == 1 else "str_sequences"] = (
-                seqs[0] if len(seqs) == 1 else seqs
-            )
-        else:
-            cfgs = self._pending_save_data["frequency_configs"]
-            entry["frequency_config" if len(cfgs) == 1 else "frequency_configs"] = (
-                cfgs[0] if len(cfgs) == 1 else cfgs
-            )
-
-        self._file_data[key].append(entry)
-        _save_file(self._file_data)
-        self._populate_table()
-        dpg.hide_item(self._t("save_modal"))
-        self._pending_save_data = None
-
     def _on_mode_changed(self, **_):
         self._populate_table()
 
@@ -402,8 +315,7 @@ class SequenceLibraryWindow(WindowBase):
         return {"time_ms": time_ms, "actinic": actinic, "pulses": pulses}
 
     # ------------------------------------------------------------------
-    # New entry modal  (sequence mode only — frequency presets are saved
-    # via the "Save current" button from frequency_input)
+    # New entry modal (sequence mode only — frequency mode has no save path)
     # ------------------------------------------------------------------
     def _build_modal(self):
         modal_tag = self._t("modal")
@@ -441,7 +353,7 @@ class SequenceLibraryWindow(WindowBase):
     def _new_entry_modal(self, *_):
         logger.debug("'+ New' button clicked")
         if self._is_frequency():
-            return  # frequency presets are saved via "Save current"
+            return  # frequency mode has no save path in the library
         vw = dpg.get_viewport_client_width()
         vh = dpg.get_viewport_client_height()
         dpg.set_item_pos(self._t("modal"), [vw // 2 - 210, vh // 2 - 100])
@@ -464,31 +376,3 @@ class SequenceLibraryWindow(WindowBase):
     def _cancel_new(self, *_):
         logger.debug("'Cancel' (new sequence) button clicked")
         dpg.hide_item(self._t("modal"))
-
-    # ------------------------------------------------------------------
-    # "Save current" name modal — shown after a successful
-    # request_current_sequence round trip (see _save_current).
-    # ------------------------------------------------------------------
-    def _build_save_modal(self):
-        modal_tag = self._t("save_modal")
-        with dpg.window(
-            tag=modal_tag,
-            label="Save current as…",
-            modal=True,
-            show=False,
-            no_resize=True,
-            width=420,
-            height=130,
-        ):
-            dpg.add_text("Name:")
-            dpg.add_input_text(
-                tag=self._t("save_name"), hint="e.g. Phi PS2 protocol", width=-1
-            )
-            dpg.add_spacer(height=6)
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Save", width=100, callback=self._confirm_save)
-                dpg.add_button(
-                    label="Cancel",
-                    width=100,
-                    callback=self._cancel_save,
-                )
