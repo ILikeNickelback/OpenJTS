@@ -7,6 +7,7 @@ frequency (1 Hz) set by ``config["Calibration"]``.
 """
 
 import numpy as np
+from loguru import logger
 from mcculw import ul
 from mcculw.enums import (
     ULRange,
@@ -106,6 +107,7 @@ class CalibrationAcquisitionADC(ADCBase):
         ul.stop_background(
             board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
         )
+        logger.debug("Calibration LED background output stopped")
 
     def update_detection_intensity(self, intensity: float) -> None:
         """Restart the AO output scan at a new detection LED intensity.
@@ -138,6 +140,7 @@ class CalibrationAcquisitionADC(ADCBase):
             ul.stop_background(
                 board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
             )
+            logger.debug("Calibration background acquisition finished")
         finally:
             self._free_acq_buffer()
             self._free_waveform_buffer()

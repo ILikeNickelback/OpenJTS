@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from typing import Optional
 import numpy as np
+from loguru import logger
 
 from hardware.adc_base import ADCBase
 
@@ -89,6 +90,7 @@ class AcquisitionBaseWorker(threading.Thread):
         finally:
             if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
                 self.adc.shutdown()
+            logger.debug(f"{type(self).__name__} thread stopped")
 
     def shutdown_forcefully(self) -> None:
         """Force the thread to stop even if the command queue is blocked."""
@@ -247,6 +249,7 @@ class AcquisitionBaseWorker(threading.Thread):
         }
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+        logger.debug(f"Saved brut data for '{self.tab_name}' to {path}")
         self._brut_data_buffer = {}
 
     # ---------------------------

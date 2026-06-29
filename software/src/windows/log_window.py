@@ -71,6 +71,7 @@ class LogWindow(WindowBase):
         dpg.show_item(self.winID)
 
     def clear(self):
+        logger.debug("'Clear' button clicked")
         self._lines.clear()
         dpg.set_value(f"log_text_{self.UUID}", "")
 

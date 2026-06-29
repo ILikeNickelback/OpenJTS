@@ -1,4 +1,6 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
+
 from core.window_base import WindowBase
 
 
@@ -88,9 +90,11 @@ class Home_win(WindowBase):
         self._set_status_badge(f"{u}_esp32_status", esp32_ok)
 
     def _retry_adc(self):
+        logger.debug("'Retry' (ADC) button clicked")
         self.refresh_status()
 
     def _retry_esp32(self):
+        logger.debug("'Retry' (ESP32) button clicked")
         self.refresh_status()
 
     def _on_device_status(self, **_):

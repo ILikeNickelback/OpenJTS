@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import filedialog
 
 import dearpygui.dearpygui as dpg
+from loguru import logger
+
 from core.window_base import WindowBase
 from utils.json_file_manager import JsonFileManager
 
@@ -95,6 +97,7 @@ class Sample_container_win(WindowBase):
             dpg.add_group(tag=self.samples_group_tag)
 
     def save_selected_samples(self):
+        logger.debug("'Save selected samples' button clicked")
         selected_samples = {}
         for UUID, sample in self.samples_dict.items():
             if dpg.get_value(f"sample_checkbox_{self.UUID}_{UUID}"):
@@ -215,11 +218,13 @@ class Sample_container_win(WindowBase):
             self.trigger_cb(cmd=cmd)
 
     def select_all_samples_cb(self, sender, app_data):
+        logger.debug("'Select all' button clicked")
         for UUID in self.samples_dict:
             dpg.set_value(f"sample_checkbox_{self.UUID}_{UUID}", True)
             self.sample_checkbox_cb(None, True, UUID)
 
     def deselect_all_samples_cb(self, sender, app_data):
+        logger.debug("'Deselect all' button clicked")
         for UUID in self.samples_dict:
             dpg.set_value(f"sample_checkbox_{self.UUID}_{UUID}", False)
             self.sample_checkbox_cb(None, False, UUID)

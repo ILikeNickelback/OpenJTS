@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from config.config import config
 from core.window_base import WindowBase
@@ -242,9 +243,11 @@ class SequenceLibraryWindow(WindowBase):
     # Actions
     # ------------------------------------------------------------------
     def _visualize_cb(self, _, __, user_data):
+        logger.debug("'View' button clicked")
         self._visualize(user_data)
 
     def _add_cb(self, _, __, user_data):
+        logger.debug("'Add' button clicked")
         self._add_to_current(user_data)
 
     def _visualize(self, idx: int):
@@ -296,10 +299,12 @@ class SequenceLibraryWindow(WindowBase):
                 self.bus.publish("add_sequence_from_library", str_sequence=str_seq)
 
     def _reload(self, *_):
+        logger.debug("'Reload' button clicked")
         self._file_data = _load_file()
         self._populate_table()
 
     def _save_current(self, *_):
+        logger.debug("'Save current' button clicked")
         """Ask the active input window for everything it currently holds.
 
         ``request_current_sequence`` is answered synchronously by whichever
@@ -333,7 +338,12 @@ class SequenceLibraryWindow(WindowBase):
         dpg.set_value(self._t("save_name"), "")
         dpg.show_item(self._t("save_modal"))
 
+    def _cancel_save(self, *_):
+        logger.debug("'Cancel' (save current) button clicked")
+        dpg.hide_item(self._t("save_modal"))
+
     def _confirm_save(self, *_):
+        logger.debug("'Save' (save current) button clicked")
         name = dpg.get_value(self._t("save_name")).strip()
         if not name or not self._pending_save_data:
             return
@@ -425,10 +435,11 @@ class SequenceLibraryWindow(WindowBase):
                 dpg.add_button(
                     label="Cancel",
                     width=100,
-                    callback=lambda: dpg.hide_item(self._t("modal")),
+                    callback=self._cancel_new,
                 )
 
     def _new_entry_modal(self, *_):
+        logger.debug("'+ New' button clicked")
         if self._is_frequency():
             return  # frequency presets are saved via "Save current"
         vw = dpg.get_viewport_client_width()
@@ -439,6 +450,7 @@ class SequenceLibraryWindow(WindowBase):
         dpg.show_item(self._t("modal"))
 
     def _confirm_new(self, *_):
+        logger.debug("'Save' (new sequence) button clicked")
         name = dpg.get_value(self._t("new_name")).strip()
         str_seq = dpg.get_value(self._t("new_seq")).strip()
         if not name or not str_seq:
@@ -447,6 +459,10 @@ class SequenceLibraryWindow(WindowBase):
         self._file_data[key].append({"name": name, "str_sequence": str_seq})
         _save_file(self._file_data)
         self._populate_table()
+        dpg.hide_item(self._t("modal"))
+
+    def _cancel_new(self, *_):
+        logger.debug("'Cancel' (new sequence) button clicked")
         dpg.hide_item(self._t("modal"))
 
     # ------------------------------------------------------------------
@@ -474,5 +490,5 @@ class SequenceLibraryWindow(WindowBase):
                 dpg.add_button(
                     label="Cancel",
                     width=100,
-                    callback=lambda: dpg.hide_item(self._t("save_modal")),
+                    callback=self._cancel_save,
                 )

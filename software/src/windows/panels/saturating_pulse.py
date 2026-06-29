@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 
@@ -62,10 +63,10 @@ class SaturatingPulseWindow(WindowBase):
 
     def _build_contents(self):
         with dpg.group(horizontal=True):
-            dpg.add_button(label="Add row", callback=self.add_row)
+            dpg.add_button(label="Add row", callback=self._add_row_cb)
             if not self.embedded:
                 dpg.add_button(
-                    label="Close", callback=lambda: dpg.hide_item(self.winID)
+                    label="Close", callback=self._close_cb
                 )
 
         with dpg.table(header_row=True, tag=f"saturating_pulse_table_{self.UUID}"):
@@ -74,6 +75,14 @@ class SaturatingPulseWindow(WindowBase):
             dpg.add_table_column(label="Duration (ms)")
             dpg.add_table_column(label="Amplitude (0 - 100)")
             dpg.add_table_column(label="Remove")
+
+    def _close_cb(self):
+        logger.debug("'Close' button clicked")
+        dpg.hide_item(self.winID)
+
+    def _add_row_cb(self, *_):
+        logger.debug("'Add row' button clicked")
+        self.add_row()
 
     def add_row(self):
         self.row_counter += 1
@@ -127,6 +136,7 @@ class SaturatingPulseWindow(WindowBase):
         )
 
     def remove_row(self, sender, app_data, user_data):
+        logger.debug("'Remove' button clicked")
         row_tag, row_index = user_data
         dpg.delete_item(row_tag)
         if row_index in self.rows:

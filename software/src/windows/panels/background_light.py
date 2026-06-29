@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
@@ -129,6 +130,7 @@ class Background_light_window(WindowBase):
             self._send(val)
 
     def _toggle(self, sender=None, app_data=None, user_data=None):
+        logger.debug("'Turn ON/OFF' button clicked")
         if (
             not self.state.get_adc_instance()
             or not self.state.get_adc_instance().is_connected()

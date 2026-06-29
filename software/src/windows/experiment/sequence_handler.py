@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
@@ -81,6 +82,7 @@ class Sequence_handler_window(WindowBase):
             dpg.bind_item_font(self.winID, fonts.large())
 
     def _load_sequence_protocol(self):
+        logger.debug("'Load sequence' button clicked")
         if (
             not self.state.get_adc_instance()
             or not self.state.get_adc_instance().is_connected()

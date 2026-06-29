@@ -185,6 +185,7 @@ class ADCBase:
             ul.stop_background(
                 board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
             )
+            logger.debug("Background acquisition stopped (shutdown)")
         except Exception as e:
             if "not running" not in str(e).lower():
                 logger.exception("Error stopping background acquisition")
@@ -296,6 +297,8 @@ class ADCBase:
             self._reader_thread.join(timeout=timeout)
             if self._reader_thread.is_alive():
                 logger.warning("Reader thread did not stop cleanly")
+            else:
+                logger.debug("Reader thread stopped")
 
     def _reader_loop(self) -> None:
         """Poll the acquisition buffer and push completed trigger blocks to the queue.
@@ -436,6 +439,7 @@ class ADCBase:
             ul.stop_background(
                 board_num=self.board_num, function_type=FunctionType.DAQOFUNCTION
             )
+            logger.debug("Background acquisition finished")
         finally:
             self._free_acq_buffer()
             self._free_waveform_buffer()

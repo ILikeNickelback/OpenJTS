@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 from windows.panels.saturating_pulse import SaturatingPulseWindow
@@ -148,7 +149,7 @@ class Frequency_input_window(WindowBase):
         self._sat_windows[n] = sat
 
         with dpg.group(horizontal=True, tag=self._st(n, "btn_group"), parent=parent):
-            dpg.add_button(label="+ Add", callback=self.add_slot)
+            dpg.add_button(label="+ Add", callback=self._add_slot_cb)
             dpg.add_button(label="Delete", callback=self._delete_cb, user_data=n)
             dpg.add_button(label="Visualize", callback=self._visualize_cb, user_data=n)
 
@@ -181,10 +182,16 @@ class Frequency_input_window(WindowBase):
                 )
             dpg.add_text(unit)
 
+    def _add_slot_cb(self, *_):
+        logger.debug("'+ Add' button clicked")
+        self.add_slot()
+
     def _delete_cb(self, _, __, user_data):
+        logger.debug("'Delete' button clicked")
         self.delete_slot(user_data)
 
     def _visualize_cb(self, _, __, user_data):
+        logger.debug("'Visualize' button clicked")
         self._visualize(user_data)
 
     def delete_slot(self, n):

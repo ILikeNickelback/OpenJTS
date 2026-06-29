@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
@@ -124,11 +125,11 @@ class Sequence_input_window(WindowBase):
         with dpg.group(
             horizontal=True, tag=f"seq_btn_group_{self.UUID}_{n}", parent=parent
         ):
-            dpg.add_button(label="+ Add", callback=self.add_sequence)
+            dpg.add_button(label="+ Add", callback=self._add_sequence_cb)
             dpg.add_button(
                 label="Delete",
                 tag=f"seq_del_{self.UUID}_{n}",
-                callback=lambda _, __, user_data: self.delete_sequence(user_data),
+                callback=lambda _, __, user_data: self._delete_sequence_cb(user_data),
                 user_data=n,
             )
             dpg.add_button(
@@ -148,6 +149,10 @@ class Sequence_input_window(WindowBase):
         self._relabel_all()
         self._sync_state()
 
+    def _add_sequence_cb(self):
+        logger.debug("'+ Add' button clicked")
+        self.add_sequence()
+
     def delete_sequence(self, n):
         if len(self._active_ns) <= 1 or n not in self._active_ns:
             return  # never delete the last sequence or if n is not active
@@ -166,12 +171,17 @@ class Sequence_input_window(WindowBase):
         self._relabel_all()
         self._sync_state()
 
+    def _delete_sequence_cb(self, n):
+        logger.debug("'Delete' button clicked")
+        self.delete_sequence(n)
+
     # ----------------------------------------------------------
     # Renaming and state sync
     # ----------------------------------------------------------
 
     def _open_params(self, n: int):
         """Publish event to open/focus the settings panel for sequence n."""
+        logger.debug("'Parameters' button clicked")
         display_idx = self._active_ns.index(n) + 1 if n in self._active_ns else n
         if self.bus:
             self.bus.publish(
@@ -180,6 +190,7 @@ class Sequence_input_window(WindowBase):
 
     def _visualize(self, n: int):
         """Decode the sequence for row n, build a preview, and publish it on the bus."""
+        logger.debug("'Visualize' button clicked")
         str_seq = dpg.get_value(f"seq_input_{self.UUID}_{n}") or ""
         if not str_seq.strip():
             return

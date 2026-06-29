@@ -3,6 +3,7 @@ import threading
 import queue
 import time
 import numpy as np
+from loguru import logger
 
 from core.window_base import WindowBase
 from workers.sequence_worker import SequenceAcquisitionWorker
@@ -175,6 +176,7 @@ class Acquisition_win(WindowBase):
     # Start / Stop (user buttons)
     # ----------------------------------------------------------
     def _start_acquisition(self):
+        logger.debug("'Start' button clicked")
         if not self.decoded_sequence_list:
             print("no squences ready")
             return
@@ -193,6 +195,7 @@ class Acquisition_win(WindowBase):
         self._start_polling()
 
     def _stop_acquisition(self):
+        logger.debug("'Stop' button clicked")
         self.stop_requested = True
 
         if self.worker_thread:

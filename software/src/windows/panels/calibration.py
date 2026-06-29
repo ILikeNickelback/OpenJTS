@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 import time
+from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
@@ -184,6 +185,7 @@ class calibration_win(WindowBase):
     # Flash toggle
     # ------------------------------------------------------------------
     def _toggle_flash(self, sender=None, app_data=None, user_data=None):
+        logger.debug("'Start/Stop flash' button clicked")
         if self._flashing:
             self._stop_flash()
         else:

@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
@@ -76,6 +77,7 @@ class Frequency_handler_window(WindowBase):
             dpg.bind_item_font(self.winID, fonts.large())
 
     def _load(self):
+        logger.debug("'Load sequences' button clicked")
         if self.bus:
             self.bus.publish("load_frequency_configs")
 

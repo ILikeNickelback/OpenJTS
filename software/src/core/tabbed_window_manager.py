@@ -127,6 +127,7 @@ class TabbedWindowManager:
 
     def _confirm(self, *_):
         """Read modal inputs and invoke ``on_add_tab``, or warn if invalid."""
+        logger.debug("'Create' button clicked")
         name = dpg.get_value(self._input_id).strip()
         # "Sequence" or "Frequency"
         acq_type = dpg.get_value(self._acq_type_id)
@@ -148,6 +149,7 @@ class TabbedWindowManager:
 
     def _cancel(self, *_):
         """Dismiss the modal without creating a tab."""
+        logger.debug("'Cancel' button clicked")
         dpg.hide_item(self._modal_id)
 
     # ------------------------------------------------------------------
