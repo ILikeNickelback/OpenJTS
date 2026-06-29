@@ -158,8 +158,6 @@ class Frequency_input_window(WindowBase):
             dpg.add_button(label="Visualize", callback=self._visualize_cb, user_data=n)
 
         dpg.add_separator(tag=self._st(n, "sep"), parent=parent)
-        dpg.add_separator(tag=self._st(n, "sep"), parent=parent)
-
 
         self._relabel_all()
 
