@@ -4,6 +4,7 @@ from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
+from config.config import config
 from workers.calibration_worker import CalibrationAcquisitionWorker
 
 
@@ -167,18 +168,26 @@ class calibration_win(WindowBase):
     # ------------------------------------------------------------------
     # ADC status
     # ------------------------------------------------------------------
-    def _refresh_adc_status(self):
+    def _hardware_ready(self) -> bool:
         adc = self.state.get_adc_instance() if self.state else None
-        connected = adc is not None and (
+        adc_ok = adc is not None and (
             adc.is_connected() if hasattr(adc, "is_connected") else True
         )
+        if config["General"].get("hardware", "ADC") == "ESP32":
+            esp32 = self.state.get_esp32_instance() if self.state else None
+            esp32_ok = esp32 is not None and esp32.is_connected()
+            return adc_ok and esp32_ok
+        return adc_ok
+
+    def _refresh_adc_status(self):
+        connected = self._hardware_ready()
         dpg.configure_item(self._t("toggle"), enabled=connected)
         if not self._flashing:
             if connected:
                 dpg.set_value(self._t("status"), "Ready")
                 dpg.configure_item(self._t("status"), color=(180, 180, 180))
             else:
-                dpg.set_value(self._t("status"), "ADC not connected")
+                dpg.set_value(self._t("status"), "Hardware not connected")
                 dpg.configure_item(self._t("status"), color=(255, 80, 80))
 
     # ------------------------------------------------------------------
@@ -192,9 +201,8 @@ class calibration_win(WindowBase):
             self._start_flash()
 
     def _start_flash(self):
-        adc = self.state.get_adc_instance() if self.state else None
-        if adc is None or (hasattr(adc, "is_connected") and not adc.is_connected()):
-            dpg.set_value(self._t("status"), "ADC not connected")
+        if not self._hardware_ready():
+            dpg.set_value(self._t("status"), "Hardware not connected")
             dpg.configure_item(self._t("status"), color=(255, 80, 80))
             dpg.configure_item(self._t("toggle"), enabled=False)
             return

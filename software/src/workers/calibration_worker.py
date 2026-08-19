@@ -9,6 +9,7 @@ import numpy as np
 from config.config import config
 from workers.base_worker import AcquisitionBaseWorker
 from hardware.adc_calibration import CalibrationAcquisitionADC
+from hardware.adc_calibration_external import ExternalCalibrationAcquisitionADC
 
 
 class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
@@ -32,6 +33,8 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
         """
         super().__init__(*args, **kwargs)
         self.detection_intensity = 100.0
+        self._hardware_mode = None
+        self._discard_next_block = False
 
     # ------------------------------------------------------------------
     # Command dispatch — calibration-specific commands only
@@ -49,7 +52,9 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
 
                 elif action == "set_detection_intensity":
                     self.detection_intensity = float(cmd.get("intensity", 100.0))
-                    if self.adc and hasattr(self.adc, "update_detection_intensity"):
+                    if self._hardware_mode == "ESP32" and self.esp32:
+                        self._send_esp32_intensity(self.detection_intensity)
+                    elif self.adc and hasattr(self.adc, "update_detection_intensity"):
                         try:
                             self.adc.update_detection_intensity(
                                 self.detection_intensity
@@ -79,17 +84,44 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
         if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
             self.adc.shutdown()
 
-        self.experiment_type = config["General"].get("experiment_type")
+        # The first block captured right after the AI scan is newly armed is
+        # unreliable (analog front-end hasn't settled) — drop it once.
+        self._discard_next_block = True
 
-        self.adc = CalibrationAcquisitionADC()
-        self._owns_adc = True
-        self.adc.configure()
-        self.adc.start_reader()
-        self.adc.start_calibration_using_adc(intensity=self.detection_intensity)
+        self.experiment_type = config["General"].get("experiment_type")
+        self._hardware_mode = config["General"].get("hardware", "ADC")
+
+        if self._hardware_mode == "ESP32":
+            self.adc = ExternalCalibrationAcquisitionADC()
+            self._owns_adc = True
+            self.adc.configure()
+            self.adc.start_reader()
+
+            # Intensity must reach the ESP32 before the "#" start-flash command
+            # — the firmware applies whatever intensity is current as of its
+            # very first flash, with no chance to catch up afterward.
+            self._send_esp32_intensity(self.detection_intensity)
+
+            freq = float(config["ADC"].get("frequency", 1.0))
+            interval_ms = max(1, round(1000.0 / freq)) if freq > 0 else 200
+            self.esp32.send_sequence(f"#{interval_ms}")
+        else:
+            self.adc = CalibrationAcquisitionADC()
+            self._owns_adc = True
+            self.adc.configure()
+            self.adc.start_reader()
+            self.adc.start_calibration_using_adc(intensity=self.detection_intensity)
+
+    def _send_esp32_intensity(self, intensity: float) -> None:
+        """Send the detection LED intensity (0-100%) to the ESP32."""
+        if self.esp32:
+            self.esp32.send_sequence(f"S{intensity:.1f}")
 
     def _stop_acquisition(self) -> None:
         """Stop AO waveform output first, then stop the AI scan."""
         self.acquiring = False
+        if self._hardware_mode == "ESP32" and self.esp32:
+            self.esp32.send_sequence("@")
         if self.adc:
             if hasattr(self.adc, "stop_calibration_using_adc"):
                 try:
@@ -127,6 +159,7 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
 
     def _handle_block(self, raw_block) -> None:
         """Emit a live message with separate di (measurement) and ref channels."""
+
         ref_arr, di_arr = self.process_block(raw_block)
 
         def _scalar(arr):

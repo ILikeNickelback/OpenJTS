@@ -3,6 +3,7 @@ from loguru import logger
 
 from core.window_base import WindowBase
 from config import fonts
+from config.config import config
 
 
 class Background_light_window(WindowBase):
@@ -131,7 +132,11 @@ class Background_light_window(WindowBase):
 
     def _toggle(self, sender=None, app_data=None, user_data=None):
         logger.debug("'Turn ON/OFF' button clicked")
-        if (
+        if config["General"].get("hardware", "ADC") == "ESP32":
+            esp32 = self.state.get_esp32_instance()
+            if not esp32 or not esp32.is_connected():
+                return  # ignore toggle if ESP32 not connected
+        elif (
             not self.state.get_adc_instance()
             or not self.state.get_adc_instance().is_connected()
         ):
@@ -156,13 +161,18 @@ class Background_light_window(WindowBase):
     # Hardware
     # ------------------------------------------------------------------
     def _send(self, amplitude: float):
-        adc = self.state.get_adc_instance() if self.state else None
-        if (
-            adc is not None
-            and adc.is_connected()
-            and hasattr(adc, "set_background_light")
-        ):
-            adc.set_background_light(amplitude)
+        if config["General"].get("hardware", "ADC") == "ESP32":
+            esp32 = self.state.get_esp32_instance() if self.state else None
+            if esp32 is not None and esp32.is_connected():
+                esp32.set_background_light(amplitude)
+        else:
+            adc = self.state.get_adc_instance() if self.state else None
+            if (
+                adc is not None
+                and adc.is_connected()
+                and hasattr(adc, "set_background_light")
+            ):
+                adc.set_background_light(amplitude)
         if self.bus:
             self.bus.publish("background_light_changed", amplitude=amplitude)
 

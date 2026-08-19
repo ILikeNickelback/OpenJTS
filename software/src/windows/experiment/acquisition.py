@@ -8,6 +8,7 @@ from loguru import logger
 from core.window_base import WindowBase
 from workers.sequence_worker import SequenceAcquisitionWorker
 from workers.frequency_worker import FrequencyAcquisitionWorker
+from config.config import config
 
 
 class Acquisition_win(WindowBase):
@@ -153,12 +154,17 @@ class Acquisition_win(WindowBase):
     # ----------------------------------------------------------
     def _check_hardware(self):
         adc = self.state.get_adc_instance()
-        # esp32 = self.state.get_esp32_instance()
         adc_ok = adc is not None and (
             adc.is_connected() if hasattr(adc, "is_connected") else True
         )
-        # esp32_ok = esp32 is not None and (esp32.is_connected() if hasattr(esp32, "is_connected") else True)
-        self.is_ready = adc_ok
+        if config["General"].get("hardware", "ADC") == "ESP32":
+            esp32 = self.state.get_esp32_instance()
+            esp32_ok = esp32 is not None and (
+                esp32.is_connected() if hasattr(esp32, "is_connected") else True
+            )
+            self.is_ready = adc_ok and esp32_ok
+        else:
+            self.is_ready = adc_ok
 
     def _ensure_worker_running(self):
         if self.state is None:

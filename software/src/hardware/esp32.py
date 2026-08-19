@@ -42,6 +42,14 @@ class Esp32Base:
     def is_connected(self):
         return self.ser is not None and self.ser.is_open
 
+    def set_background_light(self, amplitude: float) -> None:
+        """Set the actinic light level via the firmware's one-shot constant-light command.
+
+        Args:
+            amplitude: Desired intensity as a percentage (0-100).
+        """
+        self.send_sequence(f"O{amplitude:.1f}")
+
     def send_sequence(self, sequence):
         """Send a sequence of characters wrapped in < ... >."""
         if not self.is_connected():

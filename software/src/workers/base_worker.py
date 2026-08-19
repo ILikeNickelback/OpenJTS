@@ -83,9 +83,18 @@ class AcquisitionBaseWorker(threading.Thread):
         """Main thread loop: dispatch commands and execute acquisition steps."""
         try:
             while self.running and not self.force_stop.is_set():
-                self._process_pending_commands()
-                if self.acquiring:
-                    self._execute_acquisition_step()
+                try:
+                    self._process_pending_commands()
+                    if self.acquiring:
+                        self._execute_acquisition_step()
+                except Exception:
+                    logger.exception(
+                        f"{type(self).__name__} error during acquisition step"
+                    )
+                    self.acquiring = False
+                    self.result_queue.put(
+                        {"type": "error", "message": "See log for details."}
+                    )
                 time.sleep(0.001)
         finally:
             if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
@@ -183,8 +192,8 @@ class AcquisitionBaseWorker(threading.Thread):
             }
         )
         bg = self.config.get("background_light_data")
-        if self.adc and bg is not None:
-            self.adc.set_background_light(float(bg))
+        if bg is not None:
+            self._apply_background_light(float(bg))
 
     def _handle_block(self, raw_block) -> None:
         """Route a raw block to live/calibration or normal acquisition handling."""
@@ -276,8 +285,8 @@ class AcquisitionBaseWorker(threading.Thread):
         if self.adc.nbr_of_triggers_per_sample == 2:
             # Sequence mode: trigger 0 = pre-flash, trigger 1 = during-flash
             pre, flash = v[0], v[1]
-            delta_meas = np.mean(flash[:4]) - np.mean(pre[:4])
-            delta_ref = np.mean(flash[6:7]) - np.mean(pre[6:7])
+            delta_meas = np.mean(flash[:3]) - np.mean(pre[:3])
+            delta_ref = np.mean(flash[4:]) - np.mean(pre[4:])
             # print(delta_meas)
             self._buffer_brut_data(v, self.current_point)
             if self.experiment_type == "Spectro":
@@ -315,6 +324,19 @@ class AcquisitionBaseWorker(threading.Thread):
     # ---------------------------
     # Subclass hooks
     # ---------------------------
+    def _apply_background_light(self, amplitude: float) -> None:
+        """Re-apply the configured background light level after a run ends.
+
+        Default implementation writes to the ADC's analog output. Subclasses
+        whose hardware mode drives the actinic LED elsewhere (e.g. an ESP32)
+        should override this.
+
+        Args:
+            amplitude: Background light intensity in config units.
+        """
+        if self.adc:
+            self.adc.set_background_light(amplitude)
+
     def init_adc(self) -> None:
         """Create, configure, and arm the ADC. Must be overridden by every subclass."""
         raise NotImplementedError

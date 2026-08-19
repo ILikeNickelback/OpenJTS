@@ -70,7 +70,7 @@ class CalibrationAcquisitionADC(ADCBase):
         Args:
             intensity: Detection LED intensity as a percentage (0–100).
         """
-        calibration_config = config["Calibration"]
+        calibration_config = config["ADC"]
 
         for port in self.dev_info.get_dio_info().port_info:
             if port.is_port_configurable:
