@@ -37,7 +37,7 @@ class FrequencyAcquisitionADC(ADCBase):
         adc.reset_actinic_light()                    # zero AO outputs
 
     Attributes:
-        rate (float): ADC/DAC sampling rate in Hz, from ``config["ADC"]["sampling_rate"]``.
+        rate (float): Analog output sample rate in Hz, from ``config["ADC"]["output_rate"]``.
         pulse_times_ms (list[float]): Timestamps (ms) of each detection pulse in the
             waveform; populated by :meth:`configure`.
     """
@@ -45,7 +45,7 @@ class FrequencyAcquisitionADC(ADCBase):
     def __init__(self):
         """Initialise the waveform builder and internal sample counters."""
         super().__init__()
-        self.rate: float = config["ADC"]["sampling_rate"]
+        self.rate: float = config["ADC"]["output_rate"]
         self._total_waveform_samples: int = 0
         self._total_acq_samples: int = 0
         self._waveform_builder = FrequencyWaveformBuilder(self.board_num, self.rate)

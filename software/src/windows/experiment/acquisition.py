@@ -8,6 +8,7 @@ from loguru import logger
 from core.window_base import WindowBase
 from workers.sequence_worker import SequenceAcquisitionWorker
 from workers.frequency_worker import FrequencyAcquisitionWorker
+from config.config import config
 
 
 class Acquisition_win(WindowBase):
@@ -153,12 +154,17 @@ class Acquisition_win(WindowBase):
     # ----------------------------------------------------------
     def _check_hardware(self):
         adc = self.state.get_adc_instance()
-        # esp32 = self.state.get_esp32_instance()
         adc_ok = adc is not None and (
             adc.is_connected() if hasattr(adc, "is_connected") else True
         )
-        # esp32_ok = esp32 is not None and (esp32.is_connected() if hasattr(esp32, "is_connected") else True)
-        self.is_ready = adc_ok
+        if config["General"].get("hardware", "ADC") == "ESP32":
+            esp32 = self.state.get_esp32_instance()
+            esp32_ok = esp32 is not None and (
+                esp32.is_connected() if hasattr(esp32, "is_connected") else True
+            )
+            self.is_ready = adc_ok and esp32_ok
+        else:
+            self.is_ready = adc_ok
 
     def _ensure_worker_running(self):
         if self.state is None:
@@ -299,6 +305,12 @@ class Acquisition_win(WindowBase):
                     self.bus.publish(event, **kwargs)
         except queue.Empty:
             pass
+        # Update every frame (not just on worker "progress" messages) so the
+        # countdown keeps ticking during inter-sequence/inter-average waits,
+        # which block the polling thread in time.sleep() and stop it from
+        # emitting progress messages.
+        if self.polling_enabled:
+            self._update_time_displays()
         # Keep scheduling while polling is active OR items are still pending
         if self.polling_enabled or not self._main_thread_queue.empty():
             self._schedule_drain()

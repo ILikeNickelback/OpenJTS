@@ -94,6 +94,9 @@ class FrequencyWaveformBuilder:
         - ``"post_detection"`` (int, default 0): Silent periods after the sine.
         - ``"background_light_data"`` (float, default 0): Background intensity
           (% of full scale) used to phase the sine and fill dead periods.
+        - ``"detection_led_intensity"`` (float, default 100): Detection LED
+          (ch1) pulse amplitude in percent of full scale (0-100), from the
+          Detection LED Intensity window.
         - ``"amplitude"`` (float, default 1.0): Sine amplitude in % of full scale.
         - ``"offset"`` (float, default 0.0): Sine DC offset in % of full scale.
         - ``"normal_pulses_per_period"`` (int): Flash count per period; falls
@@ -124,6 +127,7 @@ class FrequencyWaveformBuilder:
         post_periods = int(frequency_config.get("post_detection", 0))
         saturating_pulse_data = frequency_config.get("saturating_pulse_data", None)
         background_light_data = frequency_config.get("background_light_data", 0)
+        detection_intensity = frequency_config.get("detection_led_intensity", 100.0)
 
         samples_per_period = int(self.rate / freq)
         total_periods = pre_periods + periods + post_periods
@@ -223,12 +227,14 @@ class FrequencyWaveformBuilder:
         ]
 
         # ---- Channel 1: Analog pulses ----
-        pulse_counts = counts_max
+        pulse_counts = int(
+            counts_max * max(0.0, min(100.0, detection_intensity)) / 100.0
+        )
         ch1_raw[:] = 0
         all_positions += 4
         for pos in all_positions:
             pulse_end = min(pos + pulse_width_samples, total_samples)
-            ch1_raw[pos:pulse_end] = counts_max
+            ch1_raw[pos:pulse_end] = pulse_counts
 
         length = len(all_positions)
 

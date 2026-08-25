@@ -36,18 +36,18 @@ class SequenceAcquisitionADC(ADCBase):
         adc.reset_actinic_light()                    # zero AO outputs
 
     Attributes:
-        rate (float): ADC/DAC sampling rate in Hz, from ``config["ADC"]["sampling_rate"]``.
+        rate (float): Analog output sample rate in Hz, from ``config["ADC"]["output_rate"]``.
     """
 
     def __init__(self):
         """Initialise the waveform builder and internal sample counters."""
         super().__init__()
-        self.rate: float = config["ADC"]["sampling_rate"]
+        self.rate: float = config["ADC"]["output_rate"]
         self._total_waveform_samples: int = 0
         self._total_acq_samples: int = 0
         self._waveform_builder = SequenceWaveformBuilder(self.board_num, self.rate)
 
-    def configure(self, sequence) -> int:
+    def configure(self, sequence, detection_intensity: float = 100.0) -> int:
         """Build the stimulus waveform, allocate DMA buffers, and arm the AI scan.
 
         Configures all digital ports as outputs, builds an interleaved
@@ -58,6 +58,8 @@ class SequenceAcquisitionADC(ADCBase):
         Args:
             sequence: Decoded token list produced by
                 ``sequence_control.decode_sequence()``.
+            detection_intensity: Detection LED pulse amplitude in percent of
+                full scale (0-100), from the Detection LED Intensity window.
 
         Returns:
             Number of detection pulses in the waveform.  The worker uses this
@@ -68,7 +70,9 @@ class SequenceAcquisitionADC(ADCBase):
                 ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
 
         interleaved, self._total_waveform_samples, number_of_pulses = (
-            self._waveform_builder.build(sequence)
+            self._waveform_builder.build(
+                sequence, detection_intensity=detection_intensity
+            )
         )
         self._total_acq_samples = (
             number_of_pulses

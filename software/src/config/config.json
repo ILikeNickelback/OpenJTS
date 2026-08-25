@@ -2,6 +2,7 @@
     "General": {
         "app_name": "JTS",
         "default_folder": "experiments",
+        "hardware": "ESP32",
         "fontsize": 15
     },
     "Debug": {
@@ -12,6 +13,7 @@
         "board_num": 0,
         "channel_count": 8,
         "sampling_rate": 200000,
+        "output_rate": 500000,
         "adc_bit_depth": 65535
     },
     "LED": {

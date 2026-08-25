@@ -70,13 +70,13 @@ class CalibrationAcquisitionADC(ADCBase):
         Args:
             intensity: Detection LED intensity as a percentage (0–100).
         """
-        calibration_config = config["Calibration"]
+        calibration_config = config["ADC"]
 
         for port in self.dev_info.get_dio_info().port_info:
             if port.is_port_configurable:
                 ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
 
-        rate = config["ADC"]["sampling_rate"]
+        rate = config["ADC"]["output_rate"]
         builder = CalibrationWaveformBuilder(self.board_num, rate)
         interleaved, total_waveform_samples, _ = builder.build(
             calibration_config, intensity=intensity

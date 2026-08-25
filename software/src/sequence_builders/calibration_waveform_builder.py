@@ -86,12 +86,8 @@ class CalibrationWaveformBuilder:
             ValueError: If *frequency* is zero or negative.
         """
         freq = float(calibration_config.get("frequency", 1.0))
-        pulses_per_period = int(
-            calibration_config.get(
-                "normal_pulses_per_period",
-                config["Sampling"].get("normal_pulses_per_period", 10),
-            )
-        )
+        pulses_per_period = int(1)
+
 
         if freq <= 0:
             raise ValueError(f"Calibration frequency must be > 0 Hz (got {freq})")

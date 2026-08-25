@@ -2,38 +2,74 @@
 
 from __future__ import annotations
 
+from config.config import config
 from hardware.adc_sequence import SequenceAcquisitionADC
+from hardware.adc_sequence_external import ExternalSequenceAcquisitionADC
 from workers.base_worker import AcquisitionBaseWorker
 
 
 class SequenceAcquisitionWorker(AcquisitionBaseWorker):
     """Worker for sequence-based acquisitions.
 
-    The ADC board generates the waveform from the decoded sequence tokens and
-    captures the AI data simultaneously.
+    Depending on ``config["General"]["hardware"]``:
+
+    - ``"ADC"`` (default): the ADC board generates the waveform from the
+      decoded sequence tokens and captures the AI data simultaneously.
+    - ``"ESP32"``: the ESP32 plays the sequence and drives the LEDs/trigger
+      pin; the ADC only arms a retriggered AI scan on its external trigger
+      input and captures data.
     """
 
     def init_adc(self) -> None:
-        """Shut down any existing ADC, then create and configure a sequence ADC.
-
-        Calls ``adc.configure(self.sequence)`` which builds the waveform and
-        returns the real point count, overwriting ``self.nbr_of_points``.
-        """
+        """Shut down any existing ADC, then create and configure one for this run."""
         if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
             self.adc.shutdown()
 
-        self.adc = SequenceAcquisitionADC()
-        self._owns_adc = True
+        self._hardware_mode = config["General"].get("hardware", "ADC")
 
-        # configure() builds the waveform and returns the real point count
-        nbr = self.adc.configure(self.sequence)
-        self.nbr_of_points = nbr
+        if self._hardware_mode == "ESP32":
+            self.adc = ExternalSequenceAcquisitionADC()
+            self._owns_adc = True
 
-        # start_acquisition() resets the hardware counter to 0;
-        # start_reader() must come after so it starts with last_count=0
-        # and never sees stale data from the previous run.
-        self.adc.start_acquisition()
-        self.adc.start_reader()
+            self.adc.configure(self.nbr_of_points)
+
+            # start_acquisition() resets the hardware counter to 0;
+            # start_reader() must come after so it starts with last_count=0
+            # and never sees stale data from the previous run.
+            self.adc.start_acquisition()
+            self.adc.start_reader()
+
+            # Arm the ADC before the ESP32 starts firing triggers.
+            self.esp32.send_sequence(self.sequence[4:])
+        else:
+            self.adc = SequenceAcquisitionADC()
+            self._owns_adc = True
+
+            # configure() builds the waveform and returns the real point count
+            detection_intensity = self.config.get("detection_led_intensity", 100.0)
+            nbr = self.adc.configure(
+                self.sequence, detection_intensity=detection_intensity
+            )
+            self.nbr_of_points = nbr
+
+            # start_acquisition() resets the hardware counter to 0;
+            # start_reader() must come after so it starts with last_count=0
+            # and never sees stale data from the previous run.
+            self.adc.start_acquisition()
+            self.adc.start_reader()
+
+    def _stop_acquisition(self) -> None:
+        """Abort the ESP32's running sequence before stopping the ADC."""
+        if getattr(self, "_hardware_mode", None) == "ESP32" and self.esp32:
+            self.esp32.stop()
+        super()._stop_acquisition()
+
+    def _apply_background_light(self, amplitude: float) -> None:
+        """Route background-light updates through the ESP32 when it owns the LEDs."""
+        if self._hardware_mode == "ESP32" and self.esp32:
+            self.esp32.set_background_light(amplitude)
+        else:
+            super()._apply_background_light(amplitude)
 
     def prepare_time_values(self) -> None:
         """Build a millisecond timestamp list by walking the sequence token stream.
