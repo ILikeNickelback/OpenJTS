@@ -1,5 +1,6 @@
 #include "states.h"
 #include "hardware.h"
+#include "serial_comm.h"
 #include "config.h"
 #include <Arduino.h>
 #include <ctype.h>
@@ -18,11 +19,30 @@ static float extractFloat(const char *seq)
     return atof(seq);
 }
 
+// Waits up to `total_us` microseconds, polling serial every millisecond so a
+// stop command can interrupt a long sequence delay instead of being stuck
+// behind a single uninterruptible delayMicroseconds() call.
+// Returns true if a stop command arrived during the wait.
+static bool waitAbortable(SystemContext &c, unsigned long total_us)
+{
+    const unsigned long CHUNK_US = 1000; // 1 ms
+    while (total_us > CHUNK_US)
+    {
+        delayMicroseconds(CHUNK_US);
+        total_us -= CHUNK_US;
+        readSerial(c.serial);
+        if (c.serial.messageReady && c.serial.buffer[0] == stopMarker)
+            return true;
+    }
+    delayMicroseconds(total_us);
+    return false;
+}
+
 // The ESP32 DAC (actinicDacPin/GPIO26 = DAC_CHANNEL_2) has a non-zero floor
 // voltage at code 0 (tens-to-hundreds of mV), which is enough to keep a
 // sensitive actinic LED driver visibly lit. Disabling the DAC channel and
 // driving the pin as a plain digital output forces a true 0V for the 0% case.
-static void writeActinicLevel(int value)
+void writeActinicLevel(int value)
 {
     if (value <= 0)
     {
@@ -62,7 +82,7 @@ void handleIdle(SystemContext &c)
 void handleContinuesFlash(SystemContext &c)
 {
     detection_trigger(c);
-    delay(c.flashIntervalMs);
+    delay(1000);
 
     if (c.serial.messageReady && c.serial.buffer[0] == set_LED_intensity)
     {
@@ -114,10 +134,10 @@ void handleSequence(SystemContext &c)
                 writeActinicLevel(round(max_amp_actinic * val / 100.0));
                 s++;
             }
-            else
-            { 
-                delayMicroseconds(val * 1000);
-                
+            else if (waitAbortable(c, (unsigned long)(val * 1000)))
+            {
+                c.serial.messageReady = false; // consume the stop command
+                break;
             }
         }
         else

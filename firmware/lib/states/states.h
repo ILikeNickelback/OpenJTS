@@ -3,6 +3,7 @@
 
 #include "system_context.h"
 
+void writeActinicLevel(int value);
 void handleIdle(SystemContext &c);
 void handleContinuesFlash(SystemContext &c);
 void handleConstantLight(SystemContext &c);

@@ -36,6 +36,10 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         frequency_config.setdefault(
             "background_light_data", self.config.get("background_light_data", 0)
         )
+        frequency_config.setdefault(
+            "detection_led_intensity",
+            self.config.get("detection_led_intensity", 100.0),
+        )
         nbr = self.adc.configure(frequency_config)
         self.nbr_of_points = nbr  # configure() returns the real point count
 

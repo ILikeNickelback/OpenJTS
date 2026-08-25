@@ -46,7 +46,10 @@ class SequenceAcquisitionWorker(AcquisitionBaseWorker):
             self._owns_adc = True
 
             # configure() builds the waveform and returns the real point count
-            nbr = self.adc.configure(self.sequence)
+            detection_intensity = self.config.get("detection_led_intensity", 100.0)
+            nbr = self.adc.configure(
+                self.sequence, detection_intensity=detection_intensity
+            )
             self.nbr_of_points = nbr
 
             # start_acquisition() resets the hardware counter to 0;
@@ -54,6 +57,12 @@ class SequenceAcquisitionWorker(AcquisitionBaseWorker):
             # and never sees stale data from the previous run.
             self.adc.start_acquisition()
             self.adc.start_reader()
+
+    def _stop_acquisition(self) -> None:
+        """Abort the ESP32's running sequence before stopping the ADC."""
+        if getattr(self, "_hardware_mode", None) == "ESP32" and self.esp32:
+            self.esp32.stop()
+        super()._stop_acquisition()
 
     def _apply_background_light(self, amplitude: float) -> None:
         """Route background-light updates through the ESP32 when it owns the LEDs."""

@@ -36,6 +36,7 @@ class Esp32Base:
 
     def disconnect(self):
         if self.ser and self.ser.is_open:
+            self.set_background_light(0)
             self.ser.close()
             print("ESP32 serial connection closed")
 
@@ -49,6 +50,10 @@ class Esp32Base:
             amplitude: Desired intensity as a percentage (0-100).
         """
         self.send_sequence(f"O{amplitude:.1f}")
+
+    def stop(self) -> None:
+        """Abort a sequence currently playing on the firmware."""
+        self.send_sequence("X")
 
     def send_sequence(self, sequence):
         """Send a sequence of characters wrapped in < ... >."""

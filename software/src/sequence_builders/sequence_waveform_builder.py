@@ -81,7 +81,10 @@ class SequenceWaveformBuilder:
         self.actinic_light_offset = config["LED"]["actinic_light_offset"]
 
     def build(
-        self, sequence_str: list[str], default_actinic: float = 100.0
+        self,
+        sequence_str: list[str],
+        default_actinic: float = 100.0,
+        detection_intensity: float = 100.0,
     ) -> Tuple[np.ndarray, int, int]:
         """Build the interleaved waveform from a decoded sequence token list.
 
@@ -102,6 +105,9 @@ class SequenceWaveformBuilder:
                 ``['1', '|', '0', '|', '100.0', 'D', '50!', '100.0', 'D']``.
             default_actinic: Initial ch0 intensity in percent (0–100) applied
                 before the first ``N!`` intensity token is encountered.
+            detection_intensity: Detection LED (ch1) pulse amplitude in percent
+                of full scale (0–100), taken from the Detection LED Intensity
+                window/calibration value.
 
         Returns:
             A 3-tuple of:
@@ -109,9 +115,10 @@ class SequenceWaveformBuilder:
             - **interleaved** (``np.ndarray[uint16]``): Flat array of length
               ``total_samples * 3`` ready for ``daq_out_scan``.
             - **total_samples** (``int``): Number of samples per channel.
-            - **digital_pulse_count** (``int``): Number of digital marker
-              pulses present in ch2 (each detection event produces two —
-              one start, one end — so this is roughly ``2 × n_detections``).
+            - **n_detections** (``int``): Number of detection (``'D'``) events
+              in the sequence. Each one contributes exactly one Python-side
+              acquisition "point" (a pre-flash + during-flash trigger pair,
+              matching ``nbr_of_triggers_per_sample``).
         """
         sequence = self._parse_sequence(sequence_str)
 
@@ -124,6 +131,9 @@ class SequenceWaveformBuilder:
         ch2_raw = interleaved[2::3]  # Digital markers
 
         counts_max = 65535
+        pulse_amplitude = int(
+            counts_max * max(0.0, min(100.0, detection_intensity)) / 100.0
+        )
 
         ch0_raw[:] = 0
         ch1_raw[:] = 0
@@ -131,7 +141,7 @@ class SequenceWaveformBuilder:
 
         current_sample = 0
         current_actinic = default_actinic
-        digital_pulse_count = 0
+        n_detections = 0
 
         for item in sequence:
             if item["type"] == "intensity":
@@ -156,30 +166,29 @@ class SequenceWaveformBuilder:
                 # Analog pulse (20 µs)
                 pulse_start = current_sample
                 pulse_end = min(pulse_start + pulse_width_samples, total_samples)
-                ch1_raw[pulse_start:pulse_end] = counts_max
+                ch1_raw[pulse_start:pulse_end] = pulse_amplitude
 
                 # Digital start marker
                 marker_end = min(pulse_start + digital_width_samples, total_samples)
-                ch2_raw[pulse_start:marker_end] = 0xFFFF
-                digital_pulse_count += 1
+                ch2_raw[pulse_start-2:marker_end] = 0xFFFF
 
                 # Digital end marker
-                end_marker_start = pulse_end
+                end_marker_start = pulse_end - 1
                 end_marker_end = min(
                     end_marker_start + digital_width_samples, total_samples
                 )
                 ch2_raw[end_marker_start:end_marker_end] = 0xFFFF
-                digital_pulse_count += 1
+
+                n_detections += 1
 
             elif item["type"] == "laser":
                 pass
 
         analog_pulse_count = np.count_nonzero(ch1_raw > 0)
-        digital_pulse_count = int(np.count_nonzero(ch2_raw > 0) / 4)
         print(f"Analog pulses: {analog_pulse_count}")
-        print(f"Total digital pulses generated: {digital_pulse_count}")
+        print(f"Detection events (points): {n_detections}")
 
-        return interleaved, total_samples, digital_pulse_count
+        return interleaved, total_samples, n_detections
 
     def _parse_sequence(self, sequence_str) -> List[dict]:
         """Parse a decoded token list into a structured command list.

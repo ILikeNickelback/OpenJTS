@@ -24,8 +24,7 @@ struct SerialState
 struct LedState
 {
     // Defaults to full scale so an unconfigured detector LED (before any
-    // 'S' command) behaves like it did at the old 4-bit resolution's
-    // default of 16/15 (clipped to max).
+    // 'S' command) is at full DAC output.
     int detectorIntensity = max_amp_detector;
     int actinicPWM = 0;
     int currentActinicPWM = 0;

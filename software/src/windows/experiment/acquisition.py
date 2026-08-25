@@ -305,6 +305,12 @@ class Acquisition_win(WindowBase):
                     self.bus.publish(event, **kwargs)
         except queue.Empty:
             pass
+        # Update every frame (not just on worker "progress" messages) so the
+        # countdown keeps ticking during inter-sequence/inter-average waits,
+        # which block the polling thread in time.sleep() and stop it from
+        # emitting progress messages.
+        if self.polling_enabled:
+            self._update_time_displays()
         # Keep scheduling while polling is active OR items are still pending
         if self.polling_enabled or not self._main_thread_queue.empty():
             self._schedule_drain()

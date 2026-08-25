@@ -47,6 +47,8 @@ class ADCBase:
         channel_count (int): Number of AI channels scanned per trigger.
         nbr_of_triggers_per_sample (int): Triggers accumulated into one data block.
         adc_bit_depth (int): Full-scale raw count (e.g. 65535 for 16-bit).
+        rate (float): Analog output sample rate in Hz, set by subclasses from
+            ``config["ADC"]["output_rate"]``; used to pace ``daq_out_scan``.
         actinic_light_max (int): Maximum actinic LED intensity value (config units).
         actinic_light_offset (int): DAC offset for the actinic LED channel.
         detection_light_max (int): Maximum detection LED intensity value (config units).
@@ -74,6 +76,9 @@ class ADCBase:
         self.actinic_light_offset = config["LED"]["actinic_light_offset"]
         self.detection_light_max = config["LED"]["detection_light_max"]
         self.detection_light_offset = config["LED"]["detection_light_offset"]
+
+        # Analog output sample rate; overridden by subclasses from config["ADC"]["output_rate"]
+        self.rate: float = config["ADC"]["output_rate"]
 
         # DMA buffer handles and ctypes array pointers
         self._memhandle_acq: int | None = None  # 32-bit acquisition buffer

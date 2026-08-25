@@ -285,7 +285,8 @@ class AcquisitionBaseWorker(threading.Thread):
         if self.adc.nbr_of_triggers_per_sample == 2:
             # Sequence mode: trigger 0 = pre-flash, trigger 1 = during-flash
             pre, flash = v[0], v[1]
-            delta_meas = np.mean(flash[:3]) - np.mean(pre[:3])
+            delta_meas = np.mean(flash[:4]) - np.mean(pre[:4])
+            print(flash[:4], flash[4:])
             delta_ref = np.mean(flash[4:]) - np.mean(pre[4:])
             # print(delta_meas)
             self._buffer_brut_data(v, self.current_point)

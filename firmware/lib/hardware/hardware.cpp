@@ -5,18 +5,18 @@
 void detection_trigger(SystemContext &c)
 {
     GPIO_SET(TriggPin);
-    delayMicroseconds(1);
+    delayMicroseconds(2);
     GPIO_CLR(TriggPin);
 
-    ledcWrite(detectorPwmChannel, c.leds.detectorIntensity);
+    GPIO_SET(detectorDacPin);
     delayMicroseconds(18);
 
     GPIO_SET(TriggPin);
-    delayMicroseconds(1);
+    delayMicroseconds(2);
     GPIO_CLR(TriggPin);
 
 
-    ledcWrite(detectorPwmChannel, 0);
+    GPIO_CLR(detectorDacPin);
 }
 
 void laser_trigger(SystemContext &c)

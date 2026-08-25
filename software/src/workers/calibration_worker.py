@@ -152,8 +152,8 @@ class CalibrationAcquisitionWorker(AcquisitionBaseWorker):
 
         # Sequence mode: trigger 0 = pre-flash, trigger 1 = during-flash
         pre, flash = v[0], v[1]
-        delta_meas = np.mean(flash[:5]) - np.mean(pre[:5])
-        delta_ref = np.mean(flash[6:7]) - np.mean(pre[6:7])
+        delta_meas = np.mean(flash[:3]) - np.mean(pre[:3])
+        delta_ref = np.mean(flash[4:]) - np.mean(pre[4:])
 
         return delta_ref, delta_meas
 

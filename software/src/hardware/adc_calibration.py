@@ -76,7 +76,7 @@ class CalibrationAcquisitionADC(ADCBase):
             if port.is_port_configurable:
                 ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
 
-        rate = config["ADC"]["sampling_rate"]
+        rate = config["ADC"]["output_rate"]
         builder = CalibrationWaveformBuilder(self.board_num, rate)
         interleaved, total_waveform_samples, _ = builder.build(
             calibration_config, intensity=intensity
