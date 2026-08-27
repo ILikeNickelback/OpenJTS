@@ -64,7 +64,7 @@ class CalibrationAcquisitionADC(ADCBase):
 
         Configures all configurable digital ports as outputs, builds an
         interleaved waveform via :class:`CalibrationWaveformBuilder`, copies it
-        into a 16-bit DMA buffer, and starts a continuous ``daq_out_scan``
+        into a 16-bit buffer, and starts a continuous ``daq_out_scan``
         driving AO channels 0 and 1 plus one digital channel.
 
         Args:

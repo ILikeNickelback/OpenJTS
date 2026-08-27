@@ -7,7 +7,7 @@ from loguru import logger
 
 from config.config import config
 from core.window_base import WindowBase
-from sequence_builders.control import sequence_control
+from software.src.sequence_builders.sequence_checker import sequence_control
 from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 _SEQUENCES_FILE = Path(__file__).parent.parent.parent / "config" / "sequences.json"
