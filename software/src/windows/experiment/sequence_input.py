@@ -5,7 +5,7 @@ from core.window_base import WindowBase
 from config import fonts
 
 from utils.json_file_manager import JsonFileManager
-from sequence_builders.control import sequence_control
+from software.src.sequence_builders.sequence_checker import sequence_control
 from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 

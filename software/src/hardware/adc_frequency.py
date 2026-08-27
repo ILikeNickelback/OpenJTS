@@ -52,10 +52,10 @@ class FrequencyAcquisitionADC(ADCBase):
         self.pulse_times_ms: list[float] = []
 
     def configure(self, frequency_config: dict) -> int:
-        """Build the stimulus waveform, allocate DMA buffers, and arm the AI scan.
+        """Build the stimulus waveform, allocate buffers, and arm the AI scan.
 
         Configures all digital ports as outputs, builds an interleaved
-        AO+digital waveform, copies it into the 16-bit DMA buffer, allocates
+        AO+digital waveform, copies it into the 16-bit buffer, allocates
         the 32-bit acquisition buffer, and writes the trigger count register.
 
         Args:

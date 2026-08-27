@@ -2,7 +2,7 @@
 
 Provides shared infrastructure used by all concrete ADC subclasses:
 buffer allocation/deallocation, a background reader thread that delivers
-completed trigger blocks via a queue, AI scan configuration, unit-conversion
+completed trigger blocks via a queue, AI (analog input) scan configuration, unit-conversion
 helpers, and LED output control.
 """
 
@@ -35,7 +35,7 @@ class ADCError(RuntimeError):
 class ADCBase:
     """Base ADC helper for MCC DAQ boards.
 
-    Manages the board connection, DMA buffer lifecycle, a background reader
+    Manages the board connection, buffer lifecycle, a background reader
     thread, AI scan setup, and analog output for LED control.  Subclasses
     must implement :meth:`stop_acquisition` for their specific scan type.
 
@@ -115,7 +115,7 @@ class ADCBase:
     # ------------------------------------------------------------------
 
     def _alloc_acq_buffer_32(self, num_values: int) -> None:
-        """Allocate a 32-bit DMA acquisition buffer of *num_values* samples.
+        """Allocate a 32-bit  acquisition buffer of *num_values* samples.
 
         Any previously allocated acquisition buffer is freed first.
 
@@ -136,7 +136,7 @@ class ADCBase:
         logger.debug("Allocated acq buffer (32-bit) size=%d", num_values)
 
     def _alloc_waveform_buffer_16(self, num_values: int) -> None:
-        """Allocate a 16-bit DMA waveform output buffer of *num_values* samples.
+        """Allocate a 16-bit  waveform output buffer of *num_values* samples.
 
         Any previously allocated waveform buffer is freed first.
 
@@ -156,7 +156,7 @@ class ADCBase:
         logger.debug("Allocated waveform buffer (16-bit) size=%d", num_values)
 
     def _free_acq_buffer(self) -> None:
-        """Release the 32-bit acquisition DMA buffer if allocated."""
+        """Release the 32-bit acquisition  buffer if allocated."""
         if self._memhandle_acq is not None:
             try:
                 ul.win_buf_free(self._memhandle_acq)
@@ -167,7 +167,7 @@ class ADCBase:
                 self._c_data_array = None
 
     def _free_waveform_buffer(self) -> None:
-        """Release the 16-bit waveform DMA buffer if allocated."""
+        """Release the 16-bit waveform buffer if allocated."""
         if self._memhandle is not None:
             try:
                 ul.win_buf_free(self._memhandle)
@@ -217,6 +217,7 @@ class ADCBase:
         The scan is clocked externally (``rate=1`` is ignored by the board).
         Uses ``EXTTRIGGER | BACKGROUND | CONTINUOUS | RETRIGMODE`` so the board
         re-arms automatically after each trigger.
+        rate is ignored because the board is clocked externally by the trigger input.
 
         Args:
             total_points: Total number of samples across all channels to
@@ -308,7 +309,7 @@ class ADCBase:
     def _reader_loop(self) -> None:
         """Poll the acquisition buffer and push completed trigger blocks to the queue.
 
-        Runs on the reader thread. Accumulates raw samples from the DMA buffer
+        Runs on the reader thread. Accumulates raw samples from th buffer
         into ``trigger_block`` and enqueues a slice every time a full block
         (``samples_per_trigger x nbr_of_triggers_per_sample``) is available.
 

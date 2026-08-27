@@ -1,26 +1,14 @@
 # OpenJTS
 
-Open-source instrument control software for a JTS (Joliot-type Spectrophotometer). Designed for measuring light-induced transient signals in photosynthesis research — ECS, Phi PSII, and related fluorescence and spectroscopy protocols.
-
+Open-source JTS (Joliot-type Spectrophotometer).
+Designed for measuring light-induced signals in photosynthesis research using fluorescence and spectroscopy protocols.
+Two acquisition modes are supported: sequence mode and frequency mode.
 ---
 
 ## Overview
 
-OpenJTS drives two hardware components:
-
-| Component | Role |
-|---|---|
-| **MCC DAQ ADC board** | High-speed analog data acquisition (200 kHz, 8 channels) |
-| **ESP32 microcontroller** | LED sequence timing control via serial |
-
-Two acquisition modes are supported:
-
-- **Sequence mode** — a custom text-based sequence language defines the timing of detection pulses, actinic light steps, and repeats. The decoded sequence is sent to the ESP32 and ADC simultaneously.
-- **Frequency mode** — a sinusoidal actinic waveform is generated at a configurable frequency, amplitude, and offset with a defined detection window.
-
-Each mode can be run as a **Fluorescence** or **Spectroscopy** experiment.
-
----
+This OpenJTS project includes the necessary software to control the JTS, the PCB design and BOMs, the stp files and the docs.
+Certain manuals might be found on other adresses for easier reading.
 
 ## Requirements
 
@@ -138,8 +126,10 @@ Sequences are written in a compact domain-specific language. A few examples:
 |---|---|
 | `D` | Detection pulse |
 | `A[100]` | Set actinic light to 100 % |
-| `300µsD` | 300 µs detection pulse |
+| `300µs` | 300µs delay|
 | `4(100msD)` | Repeat `100msD` four times |
+| `L` | Laser |
+| `T` | Set time start point |
 
 Example — ECS measurement:
 ```
@@ -158,15 +148,3 @@ Example — ECS measurement:
 - **Sequence history** — timestamped log of every completed acquisition.
 - **Workspace save / restore** — full experiment state (sequences, parameters, results, metadata) saved to JSON and reloadable.
 - **Autosave** — a snapshot is written to `software/src/temp/autosave.json` after every completed acquisition.
-
----
-
-## Contributing
-
-Contributions are welcome. Please open an issue before submitting a large pull request so the change can be discussed first.
-
-The project uses **ruff** for linting:
-
-```powershell
-pixi run ruff check software/src
-```
