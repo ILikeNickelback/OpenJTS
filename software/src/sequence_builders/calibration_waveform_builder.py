@@ -11,8 +11,6 @@ import numpy as np
 from mcculw.device_info import DaqDeviceInfo
 import matplotlib.pyplot as plt
 
-from config.config import config
-
 
 class CalibrationWaveformBuilder:
     """Build a single-period calibration waveform meant to loop continuously.
