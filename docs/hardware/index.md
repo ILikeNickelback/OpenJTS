@@ -1,5 +1,3 @@
-# Hardware
-
 This section details what you need to know about hardware.
 
 ```{toctree}
