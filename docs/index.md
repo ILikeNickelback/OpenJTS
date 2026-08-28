@@ -6,6 +6,7 @@ Open-source instrument control software for a JTS (Joliot-type Spectrophotometer
 :maxdepth: 2
 :caption: Documentation
 
+overview
 hardware/index
 software/index
 firmware/firmware
