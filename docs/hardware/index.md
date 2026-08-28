@@ -1,24 +1,24 @@
 # Hardware
 
-This section details 
+This section details what you need to know about hardware.
 
 ```{toctree}
 :maxdepth: 2
-:caption: Hardware
+:caption: Commercial 
 
-hardware/index
+commercial/index.md
 ```
 
 ```{toctree}
 :maxdepth: 2
-:caption: Software
+:caption: Modules
 
-software/index
+modules/index.md
 ```
 
 ```{toctree}
 :maxdepth: 2
-:caption: Firmware
+:caption: Technical notes
 
-software/firmware
+notes/index.md
 ```
