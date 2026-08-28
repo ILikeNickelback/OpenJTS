@@ -20,5 +20,5 @@ software/index
 :maxdepth: 2
 :caption: Firmware
 
-software/firmware
+software/firmware/firmware.md
 ```
