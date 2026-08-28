@@ -2,7 +2,8 @@
 
 This is the documentation page for the open hardware version of the Joliot Type Spectrophotometer (OpenJTS). You will find all the necessary documentation about the hardware, software and firmware such as technical notes, construction instructions or manuals.
 
-ADD PHOTO HERE
+![My image](assets/JTS150_002.png)
+
 
 ## Purpose
 
