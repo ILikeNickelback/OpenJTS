@@ -8,5 +8,6 @@ Open-source instrument control software for a JTS (Joliot-type Spectrophotometer
 
 hardware/index
 software/index
-firmware/index
+firmware/firmware
 ```
+
