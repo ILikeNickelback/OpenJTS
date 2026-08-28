@@ -1,6 +1,6 @@
 {
     "General": {
-        "app_name": "JTS",
+        "app_name": "OpenJTS",
         "default_folder": "experiments",
         "hardware": "ESP32",
         "fontsize": 15
