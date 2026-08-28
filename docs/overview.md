@@ -15,5 +15,9 @@ A greater number of actinic and detection light levels
 Two independant detection LEDs instead of the use of Y fibre optics
 Designed for flat samples
 
+## Where to start
+You will find a full step by step build instructions her :
+Note that there multile instructions manuals for each independant part to help with clarity.
+
 ## Licence
 
