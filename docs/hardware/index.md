@@ -4,7 +4,7 @@ This section details what you need to know about hardware.
 :maxdepth: 2
 :caption: Commercial 
 
-commercial/index.md
-notes/index.md
-modules/index.md
+commercial/index
+notes/index
+modules/index
 ```
