@@ -1,4 +1,4 @@
-# OpenJTS Software — Overview
+# Architecture
 
 ## What It Is
 
