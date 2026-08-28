@@ -5,7 +5,7 @@ TODO
 
 ```{toctree}
 :maxdepth: 2
-:caption: Commercial
+:caption: Commercial parts
 
 adc
 esp32
