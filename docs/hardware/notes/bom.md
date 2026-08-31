@@ -58,16 +58,16 @@ You can order the following CNC components at a CNC manufacturer such as [Link](
 
 | Component | Quantity | Price per unit | Reference |
 |---|---|---|---|
-| Detection LED holder | 2 | 18 | ![My image](assets/img/JTS - Detection holder.png) |
-| Actinic LED holder | 2 | 27 | ![My image](assets/img/JTS - Actinic holder.png) |
-| Diffusion holder | 2 | 30 | ![My image](assets/img/JTS - Diffusion holder.png) |
-| Photodiode holder | 2 | 35 | ![My image](assets/img/JTS - Photodiode holder.png) |
-| preamp case | 2 | 65 | ![My image](assets/img/JTS - Preamp case.png) |
-| preamp case base | 2 | 18 | ![My image](assets/img/JTS - Preamp base case .png)  |
-| Filter holder | 2 | 6 | ![My image](assets/img/JTS - Filter holder.png)  |
-| Front panel | 2 | 18 | ![My image](assets/img/JTS - Front panel.png)  |
-| Sample holder top | 1 | 28 | ![My image](assets/img/JTS - Sample holder top.png)  |
-| Sample holder bottom | 1 | 18 | ![My image](assets/img/JTS - Sample holder bottom.png)  |
+| Detection LED holder | 2 | 18 | ![My image](../../assets/img/JTS - Detection holder.png) |
+| Actinic LED holder | 2 | 27 | ![My image](../../assets/img/JTS - Actinic holder.png) |
+| Diffusion holder | 2 | 30 | ![My image](../../assets/img/JTS - Diffusion holder.png) |
+| Photodiode holder | 2 | 35 | ![My image](../../assets/img/JTS - Photodiode holder.png) |
+| preamp case | 2 | 65 | ![My image](../../assets/img/JTS - Preamp case.png) |
+| preamp case base | 2 | 18 | ![My image](../../assets/img/JTS - Preamp base case.png)  |
+| Filter holder | 2 | 6 | ![My image](../../assets/img/JTS - Filter holder.png)  |
+| Front panel | 2 | 18 | ![My image](../../assets/img/JTS - Front panel.png)  |
+| Sample holder top | 1 | 28 | ![My image](../../assets/img/JTS - Sample holder top.png)  |
+| Sample holder bottom | 1 | 18 | ![My image](../../assets/img/JTS - Sample holder bottom.png)  |
 
 ## Optics
 

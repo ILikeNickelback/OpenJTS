@@ -12,3 +12,4 @@ software/index
 firmware/firmware
 ```
 
+![My image](assets/JTS150_002.png)
