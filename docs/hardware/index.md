@@ -7,7 +7,5 @@ This section details what you need to know about hardware.
 :caption: Hardware 
 
 build/index
-commercial/index
-modules/index
-notes/index
+technical-notes/index
 ```
