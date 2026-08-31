@@ -54,20 +54,21 @@ You can order the following PCB components at a PCB manufacturer such as [Link](
 
 ## CNC parts
 
+
 You can order the following CNC components at a CNC manufacturer such as [Link](https://jlccnc.com/).
 
-| Component | Quantity | Price per unit | Reference |
+| Component | Quantity | Price per unit | Image |
 |---|---|---|---|
-| Detection LED holder | 2 | 18 | ![My image](../../assets/img/JTS - Detection holder.png) |
-| Actinic LED holder | 2 | 27 | ![My image](../../assets/img/JTS - Actinic holder.png) |
-| Diffusion holder | 2 | 30 | ![My image](../../assets/img/JTS - Diffusion holder.png) |
-| Photodiode holder | 2 | 35 | ![My image](../../assets/img/JTS - Photodiode holder.png) |
-| preamp case | 2 | 65 | ![My image](../../assets/img/JTS - Preamp case.png) |
-| preamp case base | 2 | 18 | ![My image](../../assets/img/JTS - Preamp base case.png)  |
-| Filter holder | 2 | 6 | ![My image](../../assets/img/JTS - Filter holder.png)  |
-| Front panel | 2 | 18 | ![My image](../../assets/img/JTS - Front panel.png)  |
-| Sample holder top | 1 | 28 | ![My image](../../assets/img/JTS - Sample holder top.png)  |
-| Sample holder bottom | 1 | 18 | ![My image](../../assets/img/JTS - Sample holder bottom.png)  |
+| Detection LED holder | 2 | 18 | ![My image](../../assets/img/JTS-Detection_holder.png) |
+| Actinic LED holder | 2 | 27 | ![My image](../../assets/img/JTS-Actinic_holder.png) |
+| Diffusion holder | 2 | 30 | ![My image](../../assets/img/JTS-Diffusion_holder.png) |
+| Photodiode holder | 2 | 35 | ![My image](../../assets/img/JTS-Photodiode_holder.png) |
+| preamp case | 2 | 65 | ![My image](../../assets/img/JTS-Preamp_case.png) |
+| preamp case base | 2 | 18 | ![My image](../../assets/img/JTS-Preamp_base_case.png)  |
+| Filter holder | 2 | 6 | ![My image](../../assets/img/JTS-Filter_holder.png)  |
+| Front panel | 2 | 18 | ![My image](../../assets/img/JTS-Front_panel.png)  |
+| Sample holder top | 1 | 28 | ![My image](../../assets/img/JTS-Sample_holder_top.png)  |
+| Sample holder bottom | 1 | 18 | ![My image](../../assets/img/JTS-Sample_holder_bottom.png)  |
 
 ## Optics
 
