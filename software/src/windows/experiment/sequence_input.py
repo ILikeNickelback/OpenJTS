@@ -5,7 +5,7 @@ from core.window_base import WindowBase
 from config import fonts
 
 from utils.json_file_manager import JsonFileManager
-from software.src.sequence_builders.sequence_checker import sequence_control
+from sequence_builders.sequence_checker import sequence_checker
 from sequence_builders.sequence_waveform_builder import SequencePreviewBuilder
 
 
@@ -38,7 +38,7 @@ class Sequence_input_window(WindowBase):
 
         self.json_file_manager = JsonFileManager()
         self.json_file_manager.create_dialogs()
-        self.sequence_control = sequence_control()
+        self.sequence_control = sequence_checker()
 
         # Ever-increasing counter — gives each sequence a unique DPG tag suffix.
         # Never reused so that deleted tags never collide with new ones.

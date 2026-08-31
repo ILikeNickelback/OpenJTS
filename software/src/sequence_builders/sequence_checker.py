@@ -1,6 +1,6 @@
 # pylint: skip-file
 
-from software.src.sequence_builders.sequence_decoder import sequence_decoder
+from sequence_builders.sequence_decoder import sequence_decoder
 
 
 class sequence_checker:
