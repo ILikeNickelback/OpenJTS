@@ -6,7 +6,8 @@ This section details what you need to know about hardware.
 :maxdepth: 2
 :caption: Hardware 
 
+build/index
 commercial/index
-notes/index
 modules/index
+notes/index
 ```

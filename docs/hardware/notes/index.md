@@ -6,8 +6,6 @@ This section details the technical choices for the different modules when it is 
 :maxdepth: 2
 :caption: Notes
 
-bom
-full-build-manual
 optical-transmission
 VCCS-design
 ```

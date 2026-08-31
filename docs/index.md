@@ -19,7 +19,7 @@ Compared to previous versions, OpenJTS offers:
 
 ## Where to start
 
-The full step-by-step build instructions are available in the [build manual](hardware/notes/full-build-manual.md). Note that there are several separate instruction manuals, one for each independent part of the instrument, to keep things clear.
+The full step-by-step build instructions are available in the [build manual](hardware/build/full-build-manual.md). Note that there are several separate instruction manuals, one for each independent part of the instrument, to keep things clear.
 
 ## Licence
 

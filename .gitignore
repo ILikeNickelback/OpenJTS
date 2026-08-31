@@ -21,3 +21,7 @@ docs/_build/
 
 # Runtime experiment data (autosave + raw acquisition dumps), regenerated per run
 software/src/temp/
+
+# LibreOffice/Word lock and temp files
+.~lock.*#
+~$*
