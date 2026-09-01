@@ -9,6 +9,6 @@ This section details the technical choices for the different modules when it is 
 LED-control
 optical-transmission
 measurement-strategy
-pream_design
+preamp-design
 VCCS-design
 ```
