@@ -25,9 +25,10 @@ $$f_{-3\text{dB}} = \frac{0.35}{t_r} \approx 300\text{ kHz}$$
 We establish **300 kHz** as the minimum closed-loop bandwidth target for every gain range.
 
 ### Feedback Resistance Choice
-The highest expected current is around ...
-The adc can accept upt to +10v
-The maximum should be R = U/I = 10/0.00005 = 180Kohm
+The highest expected photocurrent is around **50 µA**. The ADC can accept up to **+10 V**, so the maximum allowable feedback resistance is:
+
+$$R_f = \frac{U}{I} = \frac{10\text{ V}}{50\text{ }\mu\text{A}} = 200\text{ k}\Omega$$
+
 To maintain high dynamic range without complex dynamic range switching, the feedback resistance is fixed at **$R_f = 200\text{ k}\Omega$**.
 
 ### Stability Equations
