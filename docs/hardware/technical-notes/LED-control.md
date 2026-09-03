@@ -1,4 +1,4 @@
-# Technical choices: LED control
+# LED control
 
 The JTS uses two types of LED:
 
