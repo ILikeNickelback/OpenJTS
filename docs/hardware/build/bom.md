@@ -83,3 +83,10 @@ You can order the following CNC components at a CNC manufacturer such as [Link](
 | Actinic LED red | 8 | 3 | [Link](https://www.mouser.fr/fr/ProductDetail/Cree-LED/XEGARD-H0-0000-000-000000S5001) |
 | Detection LED | 2 | | |
 | window | 1 | | |
+
+
+## Tools
+-Soldering unit
+-Screw drivers and spanners
+-Pliers
+-Small drill

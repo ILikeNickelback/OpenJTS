@@ -16,4 +16,5 @@ optical-transmission
 measurement-strategy
 preamp-design
 VCCS-design
+waveform-generation
 ```
