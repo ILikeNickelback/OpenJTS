@@ -8,16 +8,22 @@ The OpenJTS firmware runs on an **ESP32** (`esp32dev` board) and is built with *
 
 ## Source Layout
 
+The firmware folder contains the main.cpp file, a plateformio.ini file and a lib folder.
+Each folder is composed of
+-a header file (.h) that is used for :...
+-a C++ file (.cpp) that is used for :... 
+
+
 ```
 firmware/
 ├── platformio.ini              # esp32dev / Arduino framework
-├── src/main.cpp                # setup()/loop(), pin init, state dispatch
+├── src/main.cpp                # This file containes : setup()/loop(), pin init, state dispatch
 └── lib/
-    ├── config/                 # pin numbers, protocol markers, DAC constants
-    ├── system_context/         # SystemState enum, SerialState/LedState/SystemContext structs
-    ├── serial_comm/            # readSerial() — non-blocking <...> message framing
-    ├── hardware/                # detection_trigger(), laser_trigger()
-    └── states/                 # writeActinicLevel(), one handle*() per SystemState
+    ├── config/                 # This file containes :
+    ├── system_context/         # This file containes :
+    ├── serial_comm/            # This file containes :
+    ├── hardware/               # This file containes :
+    └── states/                 # This file containes :
 ```
 
 
