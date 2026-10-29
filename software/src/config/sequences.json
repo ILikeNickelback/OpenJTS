@@ -28,6 +28,10 @@
                 "4(100msD)A[40]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)",
                 "4(100msD)A[50]20msA[0]300µsD1msD2msD5(5msD)5(10msD)5(20msD)2(100msD)"
             ]
+        },
+        {
+            "name": "FvFm",
+            "str_sequence": "3(500msD)10ms\n\nA[40]\n5(2msA[0]500usD500usA[40])\n5(10msA[0]500usD500usA[40])\n5(30msA[0]500usD500usA[40])\n\n1ms\nA[0]\n500usD\n1msD\n2msD\n5msD\n10msD\n20msD\n100msD\n200msD\n500msD\n1000msD\n2000msD\n5000msD"
         }
     ],
     "Sequence_Spectro": [

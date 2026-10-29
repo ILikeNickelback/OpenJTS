@@ -170,10 +170,10 @@ class SequenceWaveformBuilder:
 
                 # Digital start marker
                 marker_end = min(pulse_start + digital_width_samples, total_samples)
-                ch2_raw[pulse_start-2:marker_end] = 0xFFFF
+                ch2_raw[pulse_start:marker_end] = 0xFFFF
 
                 # Digital end marker
-                end_marker_start = pulse_end - 1
+                end_marker_start = pulse_end +3
                 end_marker_end = min(
                     end_marker_start + digital_width_samples, total_samples
                 )

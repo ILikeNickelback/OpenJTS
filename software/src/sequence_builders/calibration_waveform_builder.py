@@ -115,7 +115,7 @@ class CalibrationWaveformBuilder:
             d_start_end = min(int(pos) + digital_width, samples_per_period)
             ch2_raw[pos:d_start_end] = 0xFFFF
 
-            d_end_start = pulse_end
+            d_end_start = pulse_end  + 3
             d_end_end = min(d_end_start + digital_width, samples_per_period)
             if d_end_start < samples_per_period:
                 ch2_raw[d_end_start:d_end_end] = 0xFFFF
