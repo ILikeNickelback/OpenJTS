@@ -50,7 +50,8 @@ Three supplies are used:
 
 Note: you are free to arrange the power supplies differently.
 
-*Add photo here*
+ ![My image](../../assets/img/boitier.png)
+ ![My image](../../assets/img/alim_boitier.png)
 
 ---
 
@@ -60,6 +61,7 @@ Note: you are free to arrange the power supplies differently.
 
 1. Fit connectors (green screw terminals) onto a copper plate.
 2. Mount the plate in the case on a standoff. It serves as the 0 V reference for all circuits, the ADC, and the ESP32.
+![My image](../../assets/img/masse.png)
 
 ### LED controller
 
@@ -67,11 +69,14 @@ The **LED controller PCB** is the VCCS (voltage-controlled current source) and M
 
 1. Build the LED controller according to the schematic, or order an SMD version with all components already soldered.
 2. Mount the LED controller on its standoffs.
+![My image](../../assets/img/controleur.png)
 
 ### Front panel circuit
 
 1. Build the front panel circuit.
 2. Leave the front panel open until the internal wiring is complete.
+
+![My image](../../assets/img/front_panel.png)
 
 ### ESP32 and ADC
 
