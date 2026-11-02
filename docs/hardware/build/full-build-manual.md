@@ -50,8 +50,8 @@ Three supplies are used:
 
 Note: you are free to arrange the power supplies differently.
 
- ![My image](../../assets/img/boitier.png)
- ![My image](../../assets/img/alim_boitier.png)
+ ![My image](../../assets/img/boitier.jpg)
+ ![My image](../../assets/img/alim_boitier.jpg)
 
 ---
 
@@ -61,7 +61,7 @@ Note: you are free to arrange the power supplies differently.
 
 1. Fit connectors (green screw terminals) onto a copper plate.
 2. Mount the plate in the case on a standoff. It serves as the 0 V reference for all circuits, the ADC, and the ESP32.
-![My image](../../assets/img/masse.png)
+![My image](../../assets/img/masse.jpg)
 
 ### LED controller
 
@@ -69,14 +69,14 @@ The **LED controller PCB** is the VCCS (voltage-controlled current source) and M
 
 1. Build the LED controller according to the schematic, or order an SMD version with all components already soldered.
 2. Mount the LED controller on its standoffs.
-![My image](../../assets/img/controleur.png)
+![My image](../../assets/img/controleur.jpg)
 
 ### Front panel circuit
 
 1. Build the front panel circuit.
 2. Leave the front panel open until the internal wiring is complete.
 
-![My image](../../assets/img/front_panel.png)
+![My image](../../assets/img/front_panel.jpg)
 
 ### ESP32 and ADC
 
@@ -136,7 +136,7 @@ The instrument uses two independent light paths: the **detection** LEDs (short, 
 
 1. Build the detection LED module using twisted-pair cable. Beware of the positive and negative sides, and remember to connect the case to ground.
 
-   ![My image](../../assets/img/LED_detect.png)
+   ![My image](../../assets/img/LED_detect.jpg)
 
 2. Build the actinic LED disc, as specified in [LED control](../technical-notes/LED-control.md), using an SMD reflow oven.
 3. Place the disc on the module.

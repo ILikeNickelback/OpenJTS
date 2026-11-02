@@ -1,6 +1,6 @@
 # Software
 
-This section has the references to all the functions of the OpenJTS software, a general discription of the architecture and a guide on how to adda feature.
+This section has the references to all the functions of the OpenJTS software, a general description of the architecture and a guide on how to add a feature.
 
 
 ```{toctree}

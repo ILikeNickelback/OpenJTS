@@ -2,7 +2,7 @@
 
 Welcome to the documentation for OpenJTS, an open hardware version of the Joliot Type Spectrophotometer (JTS). Here you'll find everything needed to build, run and contribute to the project: technical notes, construction instructions and manuals covering the hardware, software and firmware.
 
-![My image](../../assets/img/JTS150_002.png)
+![My image](assets/img/JTS150_002.png)
 
 ## Purpose
 
@@ -23,7 +23,7 @@ The full step-by-step build instructions are available in the [build manual](har
 
 ## Licence
 
-OpenJTS is released under the [Apache License 2.0](../LICENSE).
+OpenJTS is released under the [Apache License 2.0](https://github.com/ILikeNickelback/OpenJTS/blob/main/LICENSE).
 
 ```{toctree}
 :maxdepth: 2
