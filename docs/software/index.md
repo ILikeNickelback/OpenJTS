@@ -9,7 +9,9 @@ This section has the references to all the functions of the OpenJTS software, a 
 
 architecture
 usage
+sequence-language
 adding-a-module
+continuous-integration
 api
 
 ```

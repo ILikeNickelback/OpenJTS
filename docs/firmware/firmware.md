@@ -36,8 +36,8 @@ Pin assignments live in [`lib/config/config.h`](../../firmware/lib/config/config
 | `TriggPin` | 12 | Digital trigger pulses bracketing a detection event (e.g. for synchronizing an external DAQ) |
 | `actinicDacPin` | 26 | Actinic light level — DAC output (`DAC_CHANNEL_2`) |
 | `detectorDacPin` | 25 | Detector LED — plain digital GPIO, driven fully on/off |
-| `laserChannel_open` | 18 | Laser channel "open" trigger pulse |
-| `laserChannel_start` | 19 | Laser channel "start" trigger pulse |
+| `laserChannel_start` | 18 | Laser channel "start" trigger pulse |
+| `laserChannel_open` | 19 | Laser channel "open" trigger pulse |
 
 On boot, `setup()` maxes out the pad drive strength on all four pulse pins (`GPIO_DRIVE_CAP_3`) so their edges stay sharp even when the actinic LED's current draw sags the rail, and immediately forces the actinic output to a true 0 V so nothing is left floating before the first command arrives.
 
@@ -63,6 +63,24 @@ The first character of a framed message selects the command; markers are defined
 | `set_LED_intensity` | `S` | While in continuous-flash mode, set detector LED intensity as a percentage (e.g. `<S50>`) |
 | `stopMarker` | `X` | Abort — only recognized mid-wait during a sequence delay |
 | *(digit)* | `0`–`9` | Start a sequence-acquisition message (see below) |
+
+### What the software sends
+
+The desktop app talks to the ESP32 through `Esp32Base` in [`software/src/hardware/esp32.py`](../../software/src/hardware/esp32.py). The port is found automatically (the first serial port whose description contains `USB` or `UART`) and opened at 115200 baud. Opening the port resets the ESP32, so the app waits 2 s before sending anything.
+
+| When | Message | Sent by |
+|---|---|---|
+| Actinic light panel changed, or app closing | `<O50.0>` (level in %, `<O0.0>` on close) | `Esp32Base.set_background_light()` |
+| Sequence run starts (`hardware = "ESP32"`) | `<100.0D100.0D100!50.0A0!0.3D>` | `SequenceAcquisitionWorker.init_adc()` |
+| Stop pressed during a sequence | `<X>` | `Esp32Base.stop()` |
+| Detection LED calibration starts | `<S100.0>` then `<#1000>` | `CalibrationAcquisitionWorker` |
+| Detection LED calibration stops | `<@>` | `CalibrationAcquisitionWorker` — any non-`#` message leaves continuous-flash mode |
+
+A sequence message is the decoded token list (see [Sequence language](../software/sequence-language.md)) without its 4-item header, joined with **no separator**. The DAQ input scan is armed *before* this message is sent, so it is ready for the first trigger.
+
+Because tokens are joined without separators, a delay followed directly by another number merges into one value. For example, `50.0` followed by `0!` becomes `50.00!`, which sets the light to 50% instead of waiting 50 ms and turning it off. In practice, always put a letter (`A`, `D`, `L`) between two numbers.
+
+Note: `handleContinuesFlash()` currently waits a fixed `delay(1000)` between flashes. The interval sent with `#` is stored in `flashIntervalMs` but not used.
 
 ---
 
