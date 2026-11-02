@@ -39,7 +39,9 @@ Pin assignments live in [`lib/config/config.h`](../../firmware/lib/config/config
 | `laserChannel_open` | 18 | Laser channel "open" trigger pulse |
 | `laserChannel_start` | 19 | Laser channel "start" trigger pulse |
 
-`TriggPin` was deliberately moved from GPIO25 to GPIO12 to free GPIO25 for the detector LED, which needs the GPIO matrix's push-pull output stage for sharp edges. On boot, `setup()` maxes out the pad drive strength on all four pulse pins (`GPIO_DRIVE_CAP_3`) so their edges stay sharp even when the actinic LED's current draw sags the rail, and immediately forces the actinic output to a true 0 V so nothing is left floating before the first command arrives.
+On boot, `setup()` maxes out the pad drive strength on all four pulse pins (`GPIO_DRIVE_CAP_3`) so their edges stay sharp even when the actinic LED's current draw sags the rail, and immediately forces the actinic output to a true 0 V so nothing is left floating before the first command arrives.
+
+For the moment detectorDacPin is used as a plain GPIO but can aslo be used as an analog output to control the detection light intensity. However, the pull down intensity of the ADC
 
 ### Actinic level (DAC quirk)
 
