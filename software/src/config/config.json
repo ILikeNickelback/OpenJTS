@@ -2,7 +2,7 @@
     "General": {
         "app_name": "JTS",
         "default_folder": "experiments",
-        "hardware": "ESP32",
+        "hardware": "ADC",
         "fontsize": 15
     },
     "Debug": {
