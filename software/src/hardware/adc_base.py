@@ -221,7 +221,10 @@ class ADCBase:
         ``EXTCLOCK | BACKGROUND | CONTINUOUS`` instead: each pulse on the
         board's external clock input paces one scan, so the ESP32's trigger
         pin must be wired to the clock input rather than the trigger input.
-        ``rate`` is then only a hint the driver uses to size its transfers.
+        ``rate`` is then only a hint the driver uses to size its transfers;
+        it is kept at 1 so transfers stay small — a high hint makes the driver
+        wait for large packets that the ESP32's slow pulse train takes seconds
+        to fill, so ``get_status()`` stalls and live data never arrives.
 
         Args:
             total_points: Total number of samples across all channels to
@@ -230,10 +233,13 @@ class ADCBase:
                 instead of retriggering from the external trigger input.
         """
         if external_clock:
-            rate = config["ADC"]["sampling_rate"]
-            options = ScanOptions.EXTCLOCK | ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS
+            options = (ScanOptions.EXTCLOCK
+            | ScanOptions.BACKGROUND
+            | ScanOptions.CONTINUOUS
+            | ScanOptions.SINGLEIO
+            )
+
         else:
-            rate = 1
             options = (
                 ScanOptions.EXTTRIGGER
                 | ScanOptions.BACKGROUND
@@ -246,7 +252,7 @@ class ADCBase:
             low_chan=0,
             high_chan=self.channel_count - 1,
             num_points=total_points,
-            rate=rate,
+            rate=1,
             ul_range=ULRange.BIP10VOLTS,
             memhandle=self._memhandle_acq,
             options=options,

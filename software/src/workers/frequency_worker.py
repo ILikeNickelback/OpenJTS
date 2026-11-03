@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from config.config import config
 from hardware.adc_frequency import FrequencyAcquisitionADC
+from hardware.adc_frequency_external import ExternalFrequencyAcquisitionADC
 from workers.base_worker import AcquisitionBaseWorker
 
 
@@ -18,6 +20,14 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
 
     configure() returns the number of logical acquisition points,
     which overrides the nbr_of_points sent with the command.
+
+    Depending on ``config["General"]["hardware"]``:
+
+    - ``"ADC"`` (default): the ADC board generates the sine + flash waveform
+      and captures the AI data simultaneously.
+    - ``"ESP32"``: the ESP32 modulates the actinic light, fires the flashes
+      and pulses the trigger pin; the ADC only runs an externally clocked AI
+      scan and captures data.
     """
 
     def init_adc(self) -> None:
@@ -29,7 +39,11 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         if self._owns_adc and self.adc and hasattr(self.adc, "shutdown"):
             self.adc.shutdown()
 
-        self.adc = FrequencyAcquisitionADC()
+        self._hardware_mode = config["General"].get("hardware", "ADC")
+        if self._hardware_mode == "ESP32":
+            self.adc = ExternalFrequencyAcquisitionADC()
+        else:
+            self.adc = FrequencyAcquisitionADC()
         self._owns_adc = True
 
         frequency_config = dict(self.config.get("frequency_config", {}))
@@ -48,6 +62,23 @@ class FrequencyAcquisitionWorker(AcquisitionBaseWorker):
         # and never sees stale data from the previous run.
         self.adc.start_acquisition()
         self.adc.start_reader()
+
+        if self._hardware_mode == "ESP32":
+            # Arm the ADC before the ESP32 starts firing triggers.
+            self.esp32.send_sequence(self.adc.esp32_command)
+
+    def _stop_acquisition(self) -> None:
+        """Abort the ESP32's running frequency run before stopping the ADC."""
+        if getattr(self, "_hardware_mode", None) == "ESP32" and self.esp32:
+            self.esp32.stop()
+        super()._stop_acquisition()
+
+    def _apply_background_light(self, amplitude: float) -> None:
+        """Route background-light updates through the ESP32 when it owns the LEDs."""
+        if getattr(self, "_hardware_mode", None) == "ESP32" and self.esp32:
+            self.esp32.set_background_light(amplitude)
+        else:
+            super()._apply_background_light(amplitude)
 
     def prepare_time_values(self) -> None:
         """Populate ``self.time_values`` with per-point timestamps in milliseconds.

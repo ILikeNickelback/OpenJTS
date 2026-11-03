@@ -8,5 +8,6 @@ void handleIdle(SystemContext &c);
 void handleContinuesFlash(SystemContext &c);
 void handleConstantLight(SystemContext &c);
 void handleSequence(SystemContext &c);
+void handleFrequency(SystemContext &c);
 
 #endif

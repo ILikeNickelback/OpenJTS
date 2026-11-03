@@ -294,7 +294,7 @@ class AcquisitionBaseWorker(threading.Thread):
                 result = np.round((-delta_meas) / delta_ref, 7) * 1e6
                 return result
             else:
-                return np.round(delta_meas, 7) * 1e6
+                return np.round(delta_meas/delta_ref, 7) * 1e6
 
         else:
             # Frequency mode: triggers 0..n-1 = pre-flash, trigger n = during-flash

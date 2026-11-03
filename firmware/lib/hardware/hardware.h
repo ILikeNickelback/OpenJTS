@@ -8,5 +8,6 @@ void writeDacLevel(uint8_t pin, dac_channel_t channel, int value);
 
 void detection_trigger(SystemContext &c);
 void laser_trigger(SystemContext &c);
+void frequency_flash(int64_t flashStartUs, int pointsBeforeFlash);
 
 #endif

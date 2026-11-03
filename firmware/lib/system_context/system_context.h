@@ -9,7 +9,8 @@ enum class SystemState
     IDLE,
     CONTINUES_FLASH,
     CONSTANT_LIGHT,
-    SEQUENCE_ACQUISITION
+    SEQUENCE_ACQUISITION,
+    FREQUENCY_ACQUISITION
 };
 
 // ---------- Structures ----------
