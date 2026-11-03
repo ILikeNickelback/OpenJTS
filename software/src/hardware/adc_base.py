@@ -211,32 +211,45 @@ class ADCBase:
             config_val=self.samples_per_trigger,
         )
 
-    def _start_ai_scan(self, total_points: int) -> None:
-        """Start a retriggered background AI scan into the pre-allocated acq buffer.
+    def _start_ai_scan(self, total_points: int, external_clock: bool = False) -> None:
+        """Start a background AI scan into the pre-allocated acq buffer.
 
-        The scan is clocked externally (``rate=1`` is ignored by the board).
-        Uses ``EXTTRIGGER | BACKGROUND | CONTINUOUS | RETRIGMODE`` so the board
-        re-arms automatically after each trigger.
-        rate is ignored because the board is clocked externally by the trigger input.
+        By default uses ``EXTTRIGGER | BACKGROUND | CONTINUOUS | RETRIGMODE``
+        so the board re-arms automatically after each trigger.
+
+        With ``external_clock=True`` (ESP32 mode) uses
+        ``EXTCLOCK | BACKGROUND | CONTINUOUS`` instead: each pulse on the
+        board's external clock input paces one scan, so the ESP32's trigger
+        pin must be wired to the clock input rather than the trigger input.
+        ``rate`` is then only a hint the driver uses to size its transfers.
 
         Args:
             total_points: Total number of samples across all channels to
                 allocate in the scan (must match the allocated buffer size).
+            external_clock: Pace the scan from the external clock input
+                instead of retriggering from the external trigger input.
         """
+        if external_clock:
+            rate = config["ADC"]["sampling_rate"]
+            options = ScanOptions.EXTCLOCK | ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS
+        else:
+            rate = 1
+            options = (
+                ScanOptions.EXTTRIGGER
+                | ScanOptions.BACKGROUND
+                | ScanOptions.CONTINUOUS
+                | ScanOptions.RETRIGMODE
+            )
+
         ul.a_in_scan(
             board_num=self.board_num,
             low_chan=0,
             high_chan=self.channel_count - 1,
             num_points=total_points,
-            rate=1,
+            rate=rate,
             ul_range=ULRange.BIP10VOLTS,
             memhandle=self._memhandle_acq,
-            options=(
-                ScanOptions.EXTTRIGGER
-                | ScanOptions.BACKGROUND
-                | ScanOptions.CONTINUOUS
-                | ScanOptions.RETRIGMODE
-            ),
+            options=options,
         )
 
     # ------------------------------------------------------------------

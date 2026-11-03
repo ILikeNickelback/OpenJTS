@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdlib.h>
-#include "driver/dac.h"
 
 // ---------- Utilitaires locaux ----------
 static int extractInt(const char *seq)
@@ -38,22 +37,9 @@ static bool waitAbortable(SystemContext &c, unsigned long total_us)
     return false;
 }
 
-// The ESP32 DAC (actinicDacPin/GPIO26 = DAC_CHANNEL_2) has a non-zero floor
-// voltage at code 0 (tens-to-hundreds of mV), which is enough to keep a
-// sensitive actinic LED driver visibly lit. Disabling the DAC channel and
-// driving the pin as a plain digital output forces a true 0V for the 0% case.
 void writeActinicLevel(int value)
 {
-    if (value <= 0)
-    {
-        dac_output_disable(DAC_CHANNEL_2);
-        pinMode(actinicDacPin, OUTPUT);
-        digitalWrite(actinicDacPin, LOW);
-    }
-    else
-    {
-        dacWrite(actinicDacPin, value);
-    }
+    writeDacLevel(actinicDacPin, DAC_CHANNEL_2, value);
 }
 
 // ---------- États ----------

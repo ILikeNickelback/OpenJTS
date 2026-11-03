@@ -2,8 +2,8 @@
 
 The ESP32 generates the stimulus waveform (actinic light, detection LED
 pulses, trigger pin) itself; the board only captures the photodiode response
-on its AI inputs, retriggered by the ESP32's pulses on the board's external
-trigger input.
+on its AI inputs, paced by the ESP32's pulses on the board's external clock
+input.
 """
 
 from mcculw import ul
@@ -15,8 +15,8 @@ from hardware.adc_base import ADCBase
 class ExternalSequenceAcquisitionADC(ADCBase):
     """Listen-only ADC driver for ESP32-driven sequence experiments.
 
-    Arms a retriggered background AI scan on the board's external trigger
-    input (wired to the ESP32's trigger pin) and captures the photodiode
+    Arms a background AI scan paced by the board's external clock input
+    (wired to the ESP32's trigger pin) and captures the photodiode
     response. No AO/digital waveform is generated — the ESP32 owns the LEDs
     and the trigger pin.
 
@@ -44,9 +44,8 @@ class ExternalSequenceAcquisitionADC(ADCBase):
         self._alloc_acq_buffer_32(self._total_acq_samples)
 
     def start_acquisition(self) -> None:
-        """Arm the retriggered AI scan. No AO/digital output is started."""
-        self._configure_trigger_count()
-        self._start_ai_scan(self._total_acq_samples)
+        """Arm the externally clocked AI scan. No AO/digital output is started."""
+        self._start_ai_scan(self._total_acq_samples, external_clock=True)
 
     def stop_acquisition(self) -> None:
         """Stop the AI scan and free buffers.

@@ -2,7 +2,7 @@
 
 The ESP32 flashes the detection LED and pulses the trigger pin itself
 (``CONTINUES_FLASH`` state); the board only keeps a large rolling AI buffer
-armed on its external trigger input and captures the photodiode response.
+paced by its external clock input and captures the photodiode response.
 """
 
 from mcculw import ul
@@ -15,7 +15,8 @@ class ExternalCalibrationAcquisitionADC(ADCBase):
     """Listen-only ADC driver for ESP32-driven detection-LED calibration.
 
     Mirrors :class:`~hardware.adc_calibration.CalibrationAcquisitionADC`'s AI
-    side (large rolling buffer, retriggered background scan) but never builds
+    side (large rolling buffer) but paces the scan from the external clock
+    input instead of retriggering it, and never builds
     or starts an AO/digital waveform — the ESP32 owns the detection LED and
     the trigger pin.
 
@@ -27,11 +28,10 @@ class ExternalCalibrationAcquisitionADC(ADCBase):
     BUFFER_SIZE_MULTIPLIER = 1000
 
     def configure(self) -> None:
-        """Allocate the rolling acquisition buffer and arm the retriggered AI scan."""
+        """Allocate the rolling acquisition buffer and arm the externally clocked AI scan."""
         total_buffer_points = self.samples_per_trigger * self.BUFFER_SIZE_MULTIPLIER
         self._alloc_acq_buffer_32(total_buffer_points)
-        self._configure_trigger_count()
-        self._start_ai_scan(total_buffer_points)
+        self._start_ai_scan(total_buffer_points, external_clock=True)
 
     def stop_acquisition(self) -> None:
         """Stop the AI scan and free buffers.
