@@ -48,6 +48,9 @@ class TestDecodeSequence:
     def test_bracket_notation_becomes_step_command(self, decoder):
         assert decoder.decode_sequence("[3]") == ["1", "|", "0", "|", "3!"]
 
+    def test_bracket_notation_accepts_decimal(self, decoder):
+        assert decoder.decode_sequence("A[10.58]") == ["1", "|", "0", "|", "10.58!"]
+
     def test_bare_trigger_token(self, decoder):
         assert decoder.decode_sequence("T") == ["1", "|", "0", "|", "T"]
 

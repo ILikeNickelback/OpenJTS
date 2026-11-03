@@ -15,7 +15,8 @@ class sequence_decoder:
     - **Numeric tokens** with optional time units (``ms``, ``s``, ``us`` / ``µs``,
       ``m``) and an optional trailing letter (e.g. ``100ms``, ``50L``).
     - **Repetition** via ``N(…)`` notation — ``4(AB)`` expands to ``ABABABAB``.
-    - **Bracketed integers** ``[N]`` that map to the ``N!`` step command.
+    - **Bracketed numbers** ``[N]`` (integer or decimal, e.g. ``[10.58]``) that
+      map to the ``N!`` actinic intensity command.
     - **``T``** as a literal trigger token.
 
     The decoded list is prefixed with the acquisition count and inter-acquisition
@@ -106,17 +107,17 @@ class sequence_decoder:
 
             - ``"{value}"`` — a number converted to ms (e.g. ``"100.0"``).
             - ``"{char}"`` — a bare letter following a numeric token.
-            - ``"{N}!"`` — a bracketed integer (from ``[N]``).
+            - ``"{N}!"`` — a bracketed number (from ``[N]``, e.g. ``"10.58!"``).
             - ``"T"`` — the literal trigger token.
         """
         sequence = sequence.replace(" ", "")
 
         sequence = self.expand_parentheses(sequence)
 
-        sequence = re.sub(r"\[(\d+)\]", r"<B\1B>", sequence)
+        sequence = re.sub(r"\[(\d+(?:\.\d+)?)\]", r"<B\1B>", sequence)
 
         token_pattern = re.compile(
-            r"(\d+(?:\.\d+)?(?:ms|µs|us|s|m)?[A-Za-z]?)|(<B\d+B>)|(T)"
+            r"(\d+(?:\.\d+)?(?:ms|µs|us|s|m)?[A-Za-z]?)|(<B\d+(?:\.\d+)?B>)|(T)"
         )
         tokens = [t[0] or t[1] or t[2] for t in token_pattern.findall(sequence)]
 

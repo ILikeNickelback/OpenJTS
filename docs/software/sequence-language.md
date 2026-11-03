@@ -18,7 +18,7 @@ Read it left to right: four detection pulses 100 ms apart, then the actinic ligh
 |---|---|---|
 | Delay | `100ms`, `300µs`, `2s` | Wait this long before the next step |
 | Detection | `100msD` | Wait, then fire one detection pulse. Each `D` produces one measured point. |
-| Actinic level | `A[100]`, `A[0]` | Set the actinic light to N% (0–100). Takes no time. |
+| Actinic level | `A[100]`, `A[10.58]`, `A[0]` | Set the actinic light to N% (0–100, decimals allowed). Takes no time. |
 | Laser | `10msL` | Wait, then fire the laser trigger |
 | Repeat | `4(100msD)` | Repeat the contents of the brackets N times |
 
