@@ -31,7 +31,7 @@ class Sequence_handler_window(WindowBase):
         super().__init__(label=label, uuid=uuid, visible=visible)
         self.state = state
         self.bus = bus
-        self.sequence_control = sequence_control()
+        self.sequence_control = sequence_checker()
         self._preview_builder = SequencePreviewBuilder()
 
         self.pos = pos

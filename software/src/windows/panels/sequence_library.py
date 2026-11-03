@@ -67,7 +67,7 @@ class SequenceLibraryWindow(WindowBase):
         self.height = height
 
         self._file_data = _load_file()
-        self._seq_control = sequence_control()
+        self._seq_control = sequence_checker()
 
         self._buildui()
 
